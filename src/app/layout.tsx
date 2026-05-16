@@ -9,7 +9,7 @@ import { AuthProvider }  from '@/components/AuthProvider'
 import { Toaster }       from 'react-hot-toast'
 
 const inter  = Inter({ subsets: ['latin'], variable: '--font-body' })
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display', weight: ['400','500','600','700','800','900'] })
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display', weight: ['400','500','600','700','800'] })
 const mono   = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400','600','700'] })
 
 export const metadata: Metadata = {
