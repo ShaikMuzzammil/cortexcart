@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { prisma }          from '@/lib/prisma'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { AdminCharts }     from '@/components/admin/AdminCharts'
