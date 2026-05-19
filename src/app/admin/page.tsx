@@ -4,8 +4,6 @@ import { AdminCharts }     from '@/components/admin/AdminCharts'
 import { BarChart3, ShoppingBag, Users, Package, DollarSign, Mail, AlertTriangle, Star } from 'lucide-react'
 import Link from 'next/link'
 
-export const dynamic = 'force-dynamic' 
-
 async function getStats() {
   const [orders, users, products, revenue, lowStock, recent, msgs] = await Promise.all([
     prisma.order.count(),
@@ -23,6 +21,7 @@ async function getTopProducts() {
   return prisma.product.findMany({ orderBy:{ reviewCount:'desc' }, take:5, select:{ name:true, brand:true, currentPrice:true, stock:true, rating:true, reviewCount:true, images:true } })
 }
 
+export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
   const [s, top] = await Promise.all([getStats(), getTopProducts()])
