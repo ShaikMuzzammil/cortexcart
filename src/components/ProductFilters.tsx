@@ -1,107 +1,150 @@
 'use client'
-import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SlidersHorizontal, ChevronDown, X } from 'lucide-react'
+import { useState } from 'react'
+import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Category { id:string; name:string; slug:string }
-interface Props { categories:Category[]; currentParams:Record<string,string|undefined> }
+interface Props {
+  categories: { id: string; name: string; slug: string }[]
+  brands: string[]
+  currentCategory?: string
+  currentBrand?: string
+  currentMinPrice?: string
+  currentMaxPrice?: string
+}
 
-const PRICE_RANGES = [
-  { label:'Under $100',      min:'0',    max:'100' },
-  { label:'$100 – $500',     min:'100',  max:'500' },
-  { label:'$500 – $1,500',   min:'500',  max:'1500' },
-  { label:'$1,500 – $3,000', min:'1500', max:'3000' },
-  { label:'Over $3,000',     min:'3000', max:'99999' },
-]
-
-const BRANDS = ['Aurora','Carbon','Echo Labs','Helix','Ion','Nexus','Phantom','Prism','Quantum','Stellar','Synapse','Vortex']
-
-export function ProductFilters({ categories, currentParams }: Props) {
+export function ProductFilters({ categories, brands, currentCategory, currentBrand, currentMinPrice, currentMaxPrice }: Props) {
   const router = useRouter()
-  const sp     = useSearchParams()
-  const [open, setOpen] = useState(['categories','price','brands','quick'])
+  const searchParams = useSearchParams()
+  const [minP, setMinP] = useState(currentMinPrice || '')
+  const [maxP, setMaxP] = useState(currentMaxPrice || '')
+  const [openSections, setOpenSections] = useState({ categories: true, price: true, brands: true })
 
-  const toggle = (s:string) => setOpen(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s])
+  const toggle = (section: keyof typeof openSections) =>
+    setOpenSections(s => ({ ...s, [section]: !s[section] }))
 
-  const set = (key:string, val:string|null) => {
-    const params = new URLSearchParams(sp.toString())
-    val===null ? params.delete(key) : params.set(key, val)
+  const navigate = (updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    Object.entries(updates).forEach(([k, v]) => { v ? params.set(k, v) : params.delete(k) })
     router.push(`/products?${params.toString()}`)
   }
 
-  const hasFilters = !!(currentParams.category||currentParams.minPrice||currentParams.brand||currentParams.featured||currentParams.deals)
+  const clearAll = () => { setMinP(''); setMaxP(''); router.push('/products') }
+  const hasFilters = currentCategory || currentBrand || currentMinPrice || currentMaxPrice
 
   return (
-    <div className="cx-card-flat overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-cx-border">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <SlidersHorizontal size={14} className="text-cx-emerald" />
-          <span className="font-600 text-[13px] text-cx-text">Filters</span>
+          <span className="font-700 text-[13px] text-cx-text">Filters</span>
         </div>
         {hasFilters && (
-          <button onClick={() => router.push('/products')} className="text-[11px] text-cx-muted hover:text-cx-rose transition-colors flex items-center gap-1">
-            <X size={11} /> Clear
+          <button onClick={clearAll} className="text-[11px] text-cx-rose hover:text-cx-rose/80 flex items-center gap-1 transition-colors">
+            <X size={10} /> Clear
           </button>
         )}
       </div>
 
-      <Section title="Categories" id="categories" open={open.includes('categories')} onToggle={() => toggle('categories')}>
-        <button onClick={() => set('category',null)} className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] transition-colors', !currentParams.category?'bg-cx-emerald/10 text-cx-emerald':'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-          All Categories
+      {/* Categories */}
+      <div className="p-4 rounded-2xl cx-card-flat">
+        <button onClick={() => toggle('categories')}
+          className="flex items-center justify-between w-full mb-3">
+          <span className="text-[11px] font-700 text-cx-muted uppercase tracking-wider">Category</span>
+          <ChevronDown size={12} className={cn('text-cx-muted transition-transform', openSections.categories && 'rotate-180')} />
         </button>
-        {categories.map(cat => (
-          <button key={cat.id} onClick={() => set('category', currentParams.category===cat.slug?null:cat.slug)}
-            className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] transition-colors', currentParams.category===cat.slug?'bg-cx-emerald/10 text-cx-emerald':'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-            {cat.name}
-          </button>
-        ))}
-      </Section>
-
-      <Section title="Price Range" id="price" open={open.includes('price')} onToggle={() => toggle('price')}>
-        {PRICE_RANGES.map(r => {
-          const active = currentParams.minPrice===r.min && currentParams.maxPrice===r.max
-          return (
-            <button key={r.label}
-              onClick={() => { set('minPrice', active?null:r.min); set('maxPrice', active?null:r.max) }}
-              className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] transition-colors', active?'bg-cx-gold/10 text-cx-gold':'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-              {r.label}
+        {openSections.categories && (
+          <div className="space-y-0.5">
+            <button onClick={() => navigate({ category: undefined })}
+              className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-600 transition-all',
+                !currentCategory ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+              All Products
             </button>
-          )
-        })}
-      </Section>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => navigate({ category: cat.slug })}
+                className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-600 transition-all',
+                  currentCategory === cat.slug ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      <Section title="Brand" id="brands" open={open.includes('brands')} onToggle={() => toggle('brands')}>
-        {BRANDS.map(brand => (
-          <button key={brand} onClick={() => set('brand', currentParams.brand===brand?null:brand)}
-            className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] transition-colors', currentParams.brand===brand?'bg-cx-violet/10 text-cx-violet':'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-            {brand}
+      {/* Price Range */}
+      <div className="p-4 rounded-2xl cx-card-flat">
+        <button onClick={() => toggle('price')}
+          className="flex items-center justify-between w-full mb-3">
+          <span className="text-[11px] font-700 text-cx-muted uppercase tracking-wider">Price Range</span>
+          <ChevronDown size={12} className={cn('text-cx-muted transition-transform', openSections.price && 'rotate-180')} />
+        </button>
+        {openSections.price && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-cx-muted mb-1">Min $</label>
+                <input value={minP} onChange={e => setMinP(e.target.value)} type="number" min="0" placeholder="0"
+                  className="cx-input w-full px-2.5 py-2 text-[12px] rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-[10px] text-cx-muted mb-1">Max $</label>
+                <input value={maxP} onChange={e => setMaxP(e.target.value)} type="number" min="0" placeholder="Any"
+                  className="cx-input w-full px-2.5 py-2 text-[12px] rounded-lg" />
+              </div>
+            </div>
+            <button onClick={() => navigate({ minPrice: minP || undefined, maxPrice: maxP || undefined })}
+              className="btn-em w-full py-2 text-[12px] rounded-xl">Apply</button>
+            {[['Under $100','0','100'],['$100–$500','100','500'],['$500–$1000','500','1000'],['$1000+','1000','']]
+              .map(([l,mn,mx]) => (
+                <button key={l} onClick={() => { setMinP(mn); setMaxP(mx); navigate({ minPrice: mn||undefined, maxPrice: mx||undefined }) }}
+                  className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-600 transition-all',
+                    currentMinPrice===mn && currentMaxPrice===mx ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+                  {l}
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Brands */}
+      {brands.length > 0 && (
+        <div className="p-4 rounded-2xl cx-card-flat">
+          <button onClick={() => toggle('brands')}
+            className="flex items-center justify-between w-full mb-3">
+            <span className="text-[11px] font-700 text-cx-muted uppercase tracking-wider">Brand</span>
+            <ChevronDown size={12} className={cn('text-cx-muted transition-transform', openSections.brands && 'rotate-180')} />
           </button>
+          {openSections.brands && (
+            <div className="space-y-0.5 max-h-52 overflow-y-auto">
+              <button onClick={() => navigate({ brand: undefined })}
+                className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-600 transition-all',
+                  !currentBrand ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+                All Brands
+              </button>
+              {brands.map(b => (
+                <button key={b} onClick={() => navigate({ brand: b })}
+                  className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-600 transition-all',
+                    currentBrand === b ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+                  {b}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick links */}
+      <div className="p-4 rounded-2xl cx-card-flat space-y-0.5">
+        <p className="text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Quick Links</p>
+        {[
+          ['Featured Picks', '/products?featured=true', 'text-cx-gold'],
+          ['Best Deals',     '/products?deals=true',    'text-cx-rose'],
+          ['Top Rated',      '/products?sort=rating',   'text-cx-emerald'],
+          ['Newest',         '/products?sort=newest',   'text-cx-sky'],
+        ].map(([l, h, c]) => (
+          <a key={l} href={h} className={`block px-3 py-2 rounded-xl text-[12px] font-600 ${c} hover:bg-white/3 transition-colors`}>{l}</a>
         ))}
-      </Section>
-
-      <Section title="Quick Filters" id="quick" open={open.includes('quick')} onToggle={() => toggle('quick')}>
-        {[{label:'⚡ Featured',key:'featured',val:'true'},{label:'🔥 Deals Only',key:'deals',val:'true'}].map(f => {
-          const active = currentParams[f.key]===f.val
-          return (
-            <button key={f.label} onClick={() => set(f.key, active?null:f.val)}
-              className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] transition-colors', active?'bg-cx-rose/10 text-cx-rose':'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-              {f.label}
-            </button>
-          )
-        })}
-      </Section>
-    </div>
-  )
-}
-
-function Section({ title, id, open, onToggle, children }: { title:string; id:string; open:boolean; onToggle:()=>void; children:React.ReactNode }) {
-  return (
-    <div className="border-b border-cx-border last:border-0">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-3 text-[12px] font-600 text-cx-dim hover:text-cx-emerald transition-colors">
-        {title} <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
-      </button>
-      {open && <div className="px-3 pb-3 space-y-0.5">{children}</div>}
+      </div>
     </div>
   )
 }

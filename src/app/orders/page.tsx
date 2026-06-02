@@ -1,227 +1,269 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Search, Package, Loader2, Truck, CheckCircle2, Clock, CreditCard, XCircle, ChevronRight, MapPin, Calendar, Box } from 'lucide-react'
-import { formatPrice, formatDate, cn } from '@/lib/utils'
+import { useState } from 'react'
+import { Search, Package, Loader2, CheckCircle2, Clock, Truck, MapPin, XCircle, ShoppingBag, ArrowRight, ChevronRight, ExternalLink, RefreshCw } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
+import { formatPrice, formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
-const STEPS = [
-  { key: 'PENDING',           label: 'Order Placed',      icon: Clock,         desc: 'Your order has been received' },
-  { key: 'PAYMENT_CONFIRMED', label: 'Payment Confirmed', icon: CreditCard,    desc: 'Payment successfully processed' },
-  { key: 'PROCESSING',        label: 'Processing',        icon: Package,       desc: 'Preparing your items for dispatch' },
-  { key: 'SHIPPED',           label: 'Shipped',           icon: Truck,         desc: 'Your order is on its way' },
-  { key: 'DELIVERED',         label: 'Delivered',         icon: CheckCircle2,  desc: 'Order successfully delivered' },
+const STATUS_CONFIG: Record<string, { label:string; color:string; bg:string; border:string; icon:any; step:number }> = {
+  PENDING:           { label:'Pending',          color:'text-cx-gold',   bg:'bg-cx-gold/10',   border:'border-cx-gold/25',   icon:Clock,         step:0 },
+  PAYMENT_CONFIRMED: { label:'Order Confirmed',  color:'text-cx-emerald',bg:'bg-cx-emerald/10',border:'border-cx-emerald/25',icon:CheckCircle2,  step:1 },
+  PROCESSING:        { label:'Processing',       color:'text-cx-sky',    bg:'bg-cx-sky/10',    border:'border-cx-sky/25',    icon:Package,       step:2 },
+  SHIPPED:           { label:'Shipped',          color:'text-cx-violet', bg:'bg-cx-violet/10', border:'border-cx-violet/25', icon:Truck,         step:3 },
+  OUT_FOR_DELIVERY:  { label:'Out for Delivery', color:'text-cx-gold',   bg:'bg-cx-gold/10',   border:'border-cx-gold/25',   icon:MapPin,        step:4 },
+  DELIVERED:         { label:'Delivered',        color:'text-cx-emerald',bg:'bg-cx-emerald/10',border:'border-cx-emerald/25',icon:CheckCircle2,  step:5 },
+  CANCELLED:         { label:'Cancelled',        color:'text-cx-rose',   bg:'bg-cx-rose/10',   border:'border-cx-rose/25',   icon:XCircle,       step:-1 },
+}
+
+const TRACK_STEPS = [
+  { key:'PAYMENT_CONFIRMED', label:'Order Confirmed',  icon:'✅', sub:'Payment verified' },
+  { key:'PROCESSING',        label:'Processing',       icon:'⚙️', sub:'Being prepared' },
+  { key:'SHIPPED',           label:'Shipped',          icon:'📦', sub:'With carrier' },
+  { key:'OUT_FOR_DELIVERY',  label:'Out for Delivery', icon:'🚚', sub:'On the way' },
+  { key:'DELIVERED',         label:'Delivered',        icon:'🏠', sub:'At your door' },
 ]
-const STEP_ORDER = STEPS.map(s => s.key)
 
 export default function OrdersPage() {
-  const searchParams = useSearchParams()
-  const [query,   setQuery]   = useState(searchParams.get('q') || '')
+  const [query,   setQuery]   = useState('')
   const [order,   setOrder]   = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
+  const [refreshing, setRefreshing] = useState(false)
 
-  // Auto search if URL has q param
-  useEffect(() => {
-    const q = searchParams.get('q')
-    if (q) { setQuery(q); doSearch(q) }
-  }, [])
-
-  const doSearch = async (q: string) => {
-    if (!q.trim()) return
+  const lookup = async (q?: string) => {
+    const searchQ = q || query
+    if (!searchQ.trim()) { setError('Please enter an order number'); return }
     setLoading(true); setError(''); setOrder(null)
     try {
-      const res  = await fetch(`/api/orders/${encodeURIComponent(q.trim())}`)
+      const res  = await fetch(`/api/orders/${encodeURIComponent(searchQ.trim())}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Order not found')
       setOrder(data)
-    } catch (e: any) { setError(e.message) }
+    } catch(e: any) {
+      setError(e.message || 'Order not found. Check your order number.')
+    }
     setLoading(false)
   }
 
-  const handleSearch = (e: React.FormEvent) => { e.preventDefault(); doSearch(query) }
+  const refresh = async () => {
+    if (!order) return
+    setRefreshing(true)
+    await lookup(order.orderNumber)
+    setRefreshing(false)
+  }
 
-  const currentStep = order ? STEP_ORDER.indexOf(order.status) : -1
-  const isCancelled = order?.status === 'CANCELLED' || order?.status === 'REFUNDED'
+  const cfg = order ? (STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING) : null
+  const currentStep = order ? (STATUS_CONFIG[order.status]?.step || 0) : -1
 
   return (
-    <div className="min-h-screen pt-6 pb-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="page-enter min-h-screen pt-10 pb-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-cx-emerald/20 mb-6">
-            <Package size={13} className="text-cx-emerald" />
-            <span className="text-[11px] font-700 text-cx-emerald uppercase tracking-widest">Live Order Tracker</span>
+            <Package size={13} className="text-cx-emerald"/>
+            <span className="text-[11px] font-700 text-cx-emerald uppercase tracking-widest">Order Tracking</span>
           </div>
           <h1 className="font-display font-800 text-4xl sm:text-5xl text-white mb-3">Track Your Order</h1>
-          <p className="text-cx-muted text-[14px]">Enter your order number to get real-time status and delivery details</p>
+          <p className="text-cx-muted text-[15px]">Enter your order number for real-time delivery updates</p>
         </div>
 
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none" />
-            <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="e.g. CX-ABC123-XYZ"
-              className="cx-input w-full pl-11 pr-4 py-4 text-[13px] font-mono" />
+        <div className="p-6 rounded-3xl cx-card-flat mb-8">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none"/>
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && lookup()}
+                placeholder="e.g. CX-M5K2J-AB3"
+                className="cx-input w-full pl-10 pr-4 py-3.5 text-[13px] font-mono tracking-wider"/>
+            </div>
+            <button onClick={() => lookup()} disabled={loading}
+              className="btn-em px-7 py-3.5 text-[13px] font-700 rounded-2xl flex items-center gap-2 disabled:opacity-60 whitespace-nowrap">
+              {loading ? <Loader2 size={15} className="animate-spin"/> : <Search size={15}/>}
+              {loading ? 'Searching…' : 'Track Order'}
+            </button>
           </div>
-          <button type="submit" disabled={loading}
-            className="btn-em px-6 py-4 text-[13px] font-700 rounded-2xl flex items-center gap-2 disabled:opacity-60 flex-shrink-0">
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
-            Track
-          </button>
-        </form>
+          {error && (
+            <p className="mt-3 text-[13px] text-cx-rose flex items-center gap-1.5">
+              <XCircle size={14}/> {error}
+            </p>
+          )}
+        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-cx-rose/10 border border-cx-rose/20 text-[13px] text-cx-rose mb-6">
-            <XCircle size={15} /> {error}
-          </div>
-        )}
-
-        {/* Order result */}
-        {order && (
+        {/* Order Result */}
+        {order && cfg && (
           <div className="space-y-5 animate-fade-in">
 
-            {/* Status progress */}
-            <div className="p-6 rounded-3xl cx-card-flat">
-              <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-                <div>
-                  <p className="text-[11px] text-cx-muted uppercase tracking-wide mb-0.5">Order Number</p>
-                  <p className="font-mono font-700 text-cx-emerald text-lg">{order.orderNumber}</p>
+            {/* Status Header */}
+            <div className={`p-5 rounded-3xl ${cfg.bg} border ${cfg.border}`}>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-2xl ${cfg.bg} border ${cfg.border} flex items-center justify-center`}>
+                    <cfg.icon size={22} className={cfg.color}/>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-cx-muted font-700 uppercase tracking-wider">Order #{order.orderNumber}</p>
+                    <p className={`font-display font-800 text-xl ${cfg.color}`}>{cfg.label}</p>
+                    {order.carrier && order.trackingNumber && (
+                      <p className="text-[11px] text-cx-muted mt-0.5">{order.carrier} · #{order.trackingNumber}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[11px] text-cx-muted uppercase tracking-wide mb-0.5">Order Total</p>
-                  <p className="font-700 text-white text-lg">{formatPrice(order.total)}</p>
+                <div className="flex items-center gap-2">
+                  <button onClick={refresh} disabled={refreshing}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-600 text-cx-muted hover:text-cx-text bg-cx-surface border border-cx-border hover:border-cx-emerald/20 transition-all">
+                    <RefreshCw size={12} className={cn(refreshing && 'animate-spin')}/> Refresh
+                  </button>
+                  <span className={`badge text-[10px] ${cfg.color.replace('text-','')}`} style={{background:'transparent',border:'1px solid currentColor'}}>
+                    Live
+                  </span>
                 </div>
               </div>
+            </div>
 
-              {isCancelled ? (
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-cx-rose/10 border border-cx-rose/20">
-                  <XCircle size={20} className="text-cx-rose" />
-                  <div>
-                    <p className="font-700 text-cx-rose text-[14px]">Order {order.status.charAt(0) + order.status.slice(1).toLowerCase()}</p>
-                    <p className="text-cx-muted text-[12px]">This order has been cancelled or refunded</p>
-                  </div>
-                </div>
-              ) : (
-                /* Step tracker */
+            {/* Progress Stepper */}
+            {order.status !== 'CANCELLED' && (
+              <div className="p-6 rounded-3xl cx-card-flat">
+                <h3 className="font-700 text-[13px] text-cx-text mb-5 flex items-center gap-2">
+                  <Truck size={14} className="text-cx-emerald"/> Delivery Progress
+                </h3>
                 <div className="relative">
-                  {/* Background track */}
-                  <div className="absolute top-5 left-5 right-5 h-0.5 bg-cx-border z-0">
-                    <div className="h-full bg-cx-emerald transition-all duration-700 ease-out"
-                      style={{ width: `${Math.max(0, currentStep / (STEPS.length - 1) * 100)}%` }} />
-                  </div>
-
-                  <div className="relative z-10 flex items-start justify-between">
-                    {STEPS.map((step, i) => {
-                      const done   = i < currentStep
-                      const active = i === currentStep
-                      const Icon   = step.icon
+                  {/* Line */}
+                  <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-cx-border"/>
+                  <div className="absolute left-5 top-5 w-0.5 bg-cx-emerald transition-all duration-1000"
+                    style={{ height: `${Math.max(0, (currentStep - 1) / (TRACK_STEPS.length - 1) * 100)}%` }}/>
+                  <div className="space-y-4">
+                    {TRACK_STEPS.map((step, i) => {
+                      const done    = currentStep > i + 1
+                      const current = order.status === step.key
                       return (
-                        <div key={step.key} className="flex flex-col items-center gap-2 flex-1">
-                          <div className={cn('w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500',
-                            done   ? 'bg-cx-emerald border-cx-emerald text-cx-bg' :
-                            active ? 'bg-cx-emerald/15 border-cx-emerald text-cx-emerald animate-glow-pulse' :
-                            'bg-cx-surface border-cx-border text-cx-muted')}>
-                            {done ? <CheckCircle2 size={16} /> : <Icon size={15} />}
+                        <div key={step.key} className="relative flex items-start gap-4 pl-1">
+                          <div className={cn(
+                            'w-9 h-9 rounded-full flex items-center justify-center text-base flex-shrink-0 z-10 transition-all border-2',
+                            done    ? 'bg-cx-emerald border-cx-emerald text-cx-bg scale-90' :
+                            current ? 'bg-cx-emerald/15 border-cx-emerald text-cx-emerald scale-110 shadow-[0_0_12px_rgba(16,217,136,0.3)]' :
+                                      'bg-cx-surface border-cx-border text-cx-muted scale-90 opacity-50'
+                          )}>
+                            {done ? '✓' : step.icon}
                           </div>
-                          <div className="text-center">
-                            <p className={cn('text-[10px] font-700 hidden sm:block', done || active ? 'text-cx-text' : 'text-cx-muted')}>
-                              {step.label}
-                            </p>
+                          <div className={cn('pt-1.5 flex-1', !done && !current && 'opacity-50')}>
+                            <div className="flex items-center gap-2">
+                              <p className={cn('font-700 text-[13px]', done || current ? 'text-cx-text' : 'text-cx-muted')}>{step.label}</p>
+                              {current && (
+                                <span className="badge-em text-[9px] py-0.5 px-2 animate-glow-pulse">Current</span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-cx-muted">{step.sub}</p>
+                            {current && order.estimatedDelivery && (
+                              <p className="text-[11px] text-cx-gold mt-0.5 font-600">
+                                📅 Est: {new Date(order.estimatedDelivery).toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' })}
+                              </p>
+                            )}
                           </div>
                         </div>
                       )
                     })}
                   </div>
-
-                  {/* Current status desc */}
-                  {currentStep >= 0 && (
-                    <div className="mt-5 p-3 rounded-xl bg-cx-emerald/5 border border-cx-emerald/15 text-center">
-                      <p className="text-[13px] font-600 text-cx-emerald">{STEPS[currentStep]?.desc}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {order.estimatedDelivery && !isCancelled && (
-                <div className="flex items-center gap-2 mt-4 text-[12px] text-cx-muted">
-                  <Calendar size={13} className="text-cx-emerald" />
-                  Estimated delivery: <strong className="text-cx-text ml-1">{formatDate(order.estimatedDelivery)}</strong>
-                </div>
-              )}
-            </div>
-
-            {/* Items */}
-            <div className="p-5 rounded-2xl cx-card-flat">
-              <h3 className="font-600 text-[13px] text-cx-text mb-4 flex items-center gap-2">
-                <Box size={14} className="text-cx-emerald" /> Items in this order
-              </h3>
-              <div className="space-y-3">
-                {order.items?.map((item: any) => (
-                  <div key={item.id} className="flex items-center gap-3 py-2 border-b border-cx-border last:border-0">
-                    {item.product?.images?.[0] && (
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-cx-card flex-shrink-0">
-                        <img src={item.product.images[0]} alt={item.product?.name} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-600 text-cx-text truncate">{item.product?.name}</p>
-                      <p className="text-[11px] text-cx-muted">Qty: {item.quantity} × {formatPrice(item.unitPrice)}</p>
-                    </div>
-                    <span className="text-[13px] font-700 grad-emerald num flex-shrink-0">{formatPrice(item.totalPrice)}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Price summary */}
-              <div className="mt-4 pt-3 border-t border-cx-border space-y-1.5">
-                <div className="flex justify-between text-[12px] text-cx-muted"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
-                <div className="flex justify-between text-[12px] text-cx-muted">
-                  <span>Shipping</span>
-                  <span className={order.shipping === 0 ? 'text-cx-emerald' : ''}>{order.shipping === 0 ? 'FREE' : formatPrice(order.shipping)}</span>
-                </div>
-                <div className="flex justify-between text-[12px] text-cx-muted"><span>Tax</span><span>{formatPrice(order.tax)}</span></div>
-                <div className="flex justify-between font-700 text-[14px] pt-1.5 border-t border-cx-border">
-                  <span className="text-cx-text">Total</span>
-                  <span className="grad-emerald num">{formatPrice(order.total)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Delivery address */}
-            {order.shippingAddress && (
-              <div className="p-5 rounded-2xl cx-card-flat">
-                <h3 className="font-600 text-[13px] text-cx-text mb-3 flex items-center gap-2">
-                  <MapPin size={14} className="text-cx-emerald" /> Delivery Address
-                </h3>
-                <div className="text-[13px] text-cx-muted space-y-0.5">
-                  <p className="text-cx-text font-600">{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                  <p>{order.shippingAddress.line1}</p>
-                  {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
-                  <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
-                  <p>{order.shippingAddress.country}</p>
                 </div>
               </div>
             )}
 
-            {/* Order date */}
-            <p className="text-[11px] text-cx-muted text-center">
-              Order placed on {formatDate(order.createdAt)}
-            </p>
+            {/* Items */}
+            <div className="p-6 rounded-3xl cx-card-flat">
+              <h3 className="font-700 text-[13px] text-cx-text mb-4 flex items-center gap-2">
+                <ShoppingBag size={14} className="text-cx-emerald"/> Items ({order.items?.length || 0})
+              </h3>
+              <div className="space-y-3">
+                {order.items?.map((item: any) => (
+                  <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-cx-surface border border-cx-border hover:border-cx-emerald/20 transition-all">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-cx-card flex-shrink-0 border border-cx-border">
+                      {item.product?.images?.[0] ? (
+                        <Image src={item.product.images[0]} alt={item.product?.name||''} fill className="object-cover" sizes="56px"
+                          onError={(e)=>{(e.target as any).style.display='none'}}/>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-2xl">📦</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-600 text-[13px] text-cx-text truncate">{item.product?.name}</p>
+                      <p className="text-[11px] text-cx-muted">Qty: {item.quantity}</p>
+                    </div>
+                    <p className="font-700 text-[13px] grad-emerald num">{formatPrice(item.unitPrice * item.quantity)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Summary Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Price breakdown */}
+              <div className="p-5 rounded-3xl cx-card-flat">
+                <h3 className="font-700 text-[13px] text-cx-text mb-3">Price Breakdown</h3>
+                <div className="space-y-2 text-[12px]">
+                  <div className="flex justify-between"><span className="text-cx-muted">Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-cx-muted">Shipping</span>
+                    <span className={order.shipping===0?'text-cx-emerald':''}>{order.shipping===0?'FREE':formatPrice(order.shipping)}</span>
+                  </div>
+                  <div className="flex justify-between"><span className="text-cx-muted">Tax</span><span>{formatPrice(order.tax)}</span></div>
+                  <div className="flex justify-between font-700 text-[14px] pt-2 border-t border-cx-border">
+                    <span>Total</span><span className="grad-emerald num">{formatPrice(order.total)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] pt-1">
+                    <span className="text-cx-muted">Payment</span>
+                    <span className={order.paymentMethod==='cod'?'text-cx-gold':'text-cx-emerald'}>
+                      {order.paymentMethod==='cod'?'💵 Cash on Delivery':'✅ Paid Online'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping address */}
+              {order.shippingAddress && (
+                <div className="p-5 rounded-3xl cx-card-flat">
+                  <h3 className="font-700 text-[13px] text-cx-text mb-3">Delivery Address</h3>
+                  <div className="space-y-0.5 text-[12px] text-cx-muted">
+                    <p className="font-600 text-cx-text">
+                      {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                    </p>
+                    <p>{order.shippingAddress.line1}</p>
+                    {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
+                    <p>{order.shippingAddress.country}</p>
+                    {order.shippingAddress.phone && <p className="mt-1 text-cx-text">{order.shippingAddress.phone}</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-3">
+              <Link href="/products" className="btn-em px-6 py-3 text-[13px] font-700 rounded-2xl flex items-center gap-2">
+                Continue Shopping <ArrowRight size={14}/>
+              </Link>
+              <Link href="/contact" className="btn-outline-em px-6 py-3 text-[13px] rounded-2xl">
+                Need Help?
+              </Link>
+            </div>
           </div>
         )}
 
         {/* Empty state */}
-        {!order && !loading && !error && (
-          <div className="p-8 rounded-3xl cx-card-flat text-center">
-            <Package size={40} className="text-cx-muted mx-auto mb-4" />
-            <p className="font-600 text-cx-text mb-2">Enter your order number above</p>
-            <p className="text-[13px] text-cx-muted mb-4">Find it in your confirmation email or in your account under My Orders</p>
-            <Link href="/account?tab=orders" className="text-[13px] text-cx-emerald hover:underline">
-              View My Orders →
+        {!order && !loading && (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 rounded-2xl bg-cx-surface border border-cx-border flex items-center justify-center mx-auto mb-5">
+              <Package size={36} className="text-cx-muted opacity-50"/>
+            </div>
+            <h3 className="font-700 text-xl text-cx-text mb-2">Enter Your Order Number</h3>
+            <p className="text-cx-muted text-[13px] max-w-xs mx-auto mb-6">
+              Found in your confirmation email. Format: CX-XXXXX-XXX
+            </p>
+            <Link href="/account?tab=orders" className="btn-outline-em px-6 py-2.5 text-[13px] rounded-xl inline-flex items-center gap-2">
+              View Account Orders <ChevronRight size={13}/>
             </Link>
           </div>
         )}

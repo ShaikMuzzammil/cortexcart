@@ -1,49 +1,66 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
+import { BarChart3, TrendingUp, DollarSign } from 'lucide-react'
 
 export function AdminCharts() {
-  const r1 = useRef<HTMLCanvasElement>(null)
-  const r2 = useRef<HTMLCanvasElement>(null)
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => { setTimeout(() => setLoaded(true), 100) }, [])
 
-  useEffect(() => {
-    let c1: any, c2: any
-    const init = async () => {
-      const { Chart, registerables } = await import('chart.js')
-      Chart.register(...registerables)
-      const months = ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul']
-      const rev    = [18400,22100,19800,31200,42500,38900,29300,35600,41200,47800,52300,61400]
-      const ords   = [124,148,133,210,287,262,197,241,278,322,353,414]
-      if (r1.current) c1 = new Chart(r1.current, {
-        type:'line',
-        data:{ labels:months, datasets:[{ label:'Revenue', data:rev, borderColor:'#10d988', backgroundColor:'rgba(16,217,136,0.07)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#10d988', pointRadius:3, pointHoverRadius:6 }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#131829', borderColor:'#1e2640', borderWidth:1, titleColor:'#e8edf8', bodyColor:'#10d988', callbacks:{ label:(c:any)=>` $${c.raw.toLocaleString()}` } } }, scales:{ x:{ grid:{ color:'rgba(30,38,64,0.4)' }, ticks:{ color:'#5a6a8a', font:{ size:10 } } }, y:{ grid:{ color:'rgba(30,38,64,0.4)' }, ticks:{ color:'#5a6a8a', font:{ size:10 }, callback:(v:any)=>`$${(v/1000).toFixed(0)}k` } } } },
-      })
-      if (r2.current) c2 = new Chart(r2.current, {
-        type:'bar',
-        data:{ labels:months, datasets:[{ label:'Orders', data:ords, backgroundColor:'rgba(139,92,246,0.5)', borderColor:'#8b5cf6', borderWidth:1, borderRadius:5, borderSkipped:false }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#131829', borderColor:'#1e2640', borderWidth:1, titleColor:'#e8edf8', bodyColor:'#8b5cf6' } }, scales:{ x:{ grid:{ display:false }, ticks:{ color:'#5a6a8a', font:{ size:10 } } }, y:{ grid:{ color:'rgba(30,38,64,0.4)' }, ticks:{ color:'#5a6a8a', font:{ size:10 } } } } },
-      })
-    }
-    init()
-    return () => { c1?.destroy(); c2?.destroy() }
-  }, [])
+  const weekly = [
+    { day:'Mon', orders:12, revenue:1840 },
+    { day:'Tue', orders:19, revenue:2970 },
+    { day:'Wed', orders:15, revenue:2250 },
+    { day:'Thu', orders:24, revenue:3820 },
+    { day:'Fri', orders:31, revenue:4920 },
+    { day:'Sat', orders:28, revenue:4120 },
+    { day:'Sun', orders:22, revenue:3340 },
+  ]
+  const maxOrders  = Math.max(...weekly.map(d => d.orders))
+  const maxRevenue = Math.max(...weekly.map(d => d.revenue))
 
   return (
-    <>
-      <div className="p-5 rounded-2xl cx-card-flat">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-700 text-white text-[14px]">Revenue (12 months)</h3>
-          <span className="text-[11px] text-cx-emerald bg-cx-emerald/10 px-2 py-0.5 rounded-full">+32.4% YoY</span>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* Orders chart */}
+      <div className="p-6 rounded-3xl cx-card-flat">
+        <div className="flex items-center gap-2 mb-5">
+          <BarChart3 size={15} className="text-cx-emerald"/>
+          <span className="font-700 text-[13px] text-cx-text">Weekly Orders</span>
         </div>
-        <div className="h-48"><canvas ref={r1}/></div>
-      </div>
-      <div className="p-5 rounded-2xl cx-card-flat">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-700 text-white text-[14px]">Orders (12 months)</h3>
-          <span className="text-[11px] text-cx-emerald bg-cx-emerald/10 px-2 py-0.5 rounded-full">+28.1% YoY</span>
+        <div className="flex items-end gap-2 h-36">
+          {weekly.map((d, i) => (
+            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-[9px] text-cx-muted font-600 num">{d.orders}</span>
+              <div className="w-full rounded-t-lg bg-cx-emerald/20 transition-all duration-700 overflow-hidden"
+                style={{ height: `${(d.orders / maxOrders) * 100}%` }}>
+                <div className="h-full w-full rounded-t-lg bg-gradient-to-t from-cx-emerald/80 to-cx-emerald transition-all duration-1000"
+                  style={{ transform: loaded ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'bottom', transitionDelay: `${i * 80}ms` }}/>
+              </div>
+              <span className="text-[9px] text-cx-muted">{d.day}</span>
+            </div>
+          ))}
         </div>
-        <div className="h-48"><canvas ref={r2}/></div>
       </div>
-    </>
+
+      {/* Revenue chart */}
+      <div className="p-6 rounded-3xl cx-card-flat">
+        <div className="flex items-center gap-2 mb-5">
+          <TrendingUp size={15} className="text-cx-gold"/>
+          <span className="font-700 text-[13px] text-cx-text">Weekly Revenue</span>
+        </div>
+        <div className="flex items-end gap-2 h-36">
+          {weekly.map((d, i) => (
+            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-[9px] text-cx-muted font-600 num">${(d.revenue/1000).toFixed(1)}k</span>
+              <div className="w-full rounded-t-lg bg-cx-gold/20 transition-all duration-700 overflow-hidden"
+                style={{ height: `${(d.revenue / maxRevenue) * 100}%` }}>
+                <div className="h-full w-full rounded-t-lg bg-gradient-to-t from-cx-gold/80 to-cx-gold transition-all duration-1000"
+                  style={{ transform: loaded ? 'scaleY(1)' : 'scaleY(0)', transformOrigin: 'bottom', transitionDelay: `${i * 80}ms` }}/>
+              </div>
+              <span className="text-[9px] text-cx-muted">{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
