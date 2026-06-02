@@ -139,7 +139,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
   })
 }
 
-export async function sendShippingEmail(to: string, data: { name:string; orderNumber:string; trackingNumber?:string; carrier?:string; estimatedDelivery:string }) {
+export async function sendShippingEmail(to: string, data: { name:string; orderNumber:string; trackingNumber?:string; carrier?:string; estimatedDelivery:string; items?:{ name:string; qty:number; price:number; image?:string }[] }) {
   return resend.emails.send({
     from: FROM, to,
     subject: `🚚 Your order #${data.orderNumber} has shipped!`,
@@ -153,6 +153,51 @@ export async function sendShippingEmail(to: string, data: { name:string; orderNu
           <div class="row"><div class="label">Est. Delivery</div><span style="color:#10d988;font-weight:700;">${data.estimatedDelivery}</span></div>
         </div>
         <div style="text-align:center;"><a href="${process.env.NEXT_PUBLIC_APP_URL}/orders?q=${data.orderNumber}" class="btn">Track Live →</a></div>
+      </div>
+      <div class="footer">© ${new Date().getFullYear()} CortexCart</div>
+    </div></body></html>`,
+  })
+}
+
+export async function sendOutForDeliveryEmail(to: string, data: { name:string; orderNumber:string; estimatedTime?:string; items?:{ name:string; qty:number; price:number; image?:string }[] }) {
+  return resend.emails.send({
+    from: FROM, to,
+    subject: `📦 Your order #${data.orderNumber} is out for delivery!`,
+    html: `<html><head><style>${base}</style></head><body><div class="wrap">
+      <div class="head"><h1>Out for Delivery! 📦</h1><p>${data.estimatedTime || 'Arriving today'}</p></div>
+      <div class="body">
+        <p>Hi <strong>${data.name}</strong>, your order is on its way — the driver is heading to you now!</p>
+        <div class="card">
+          <div class="row"><div class="label">Order</div><span style="font-family:monospace;">#${data.orderNumber}</span></div>
+          ${data.estimatedTime ? `<div class="row"><div class="label">Estimated</div><span style="color:#10d988;font-weight:700;">${data.estimatedTime}</span></div>` : ''}
+        </div>
+        <div style="text-align:center;"><a href="${process.env.NEXT_PUBLIC_APP_URL}/orders?q=${data.orderNumber}" class="btn">Track Live →</a></div>
+      </div>
+      <div class="footer">© ${new Date().getFullYear()} CortexCart</div>
+    </div></body></html>`,
+  })
+}
+
+export async function sendDeliveredEmail(to: string, data: { name:string; orderNumber:string; deliveredAt?:string; total?:number; items?:{ name:string; qty:number; price:number; image?:string }[] }) {
+  const itemRows = data.items?.map(i =>
+    `<div class="row"><span style="color:#e8edf8;">${i.name}</span><span style="color:#8896b3;margin:0 12px;">×${i.qty}</span><span class="price">$${i.price.toFixed(2)}</span></div>`
+  ).join('') || ''
+
+  return resend.emails.send({
+    from: FROM, to,
+    subject: `✅ Order #${data.orderNumber} delivered — Thank you!`,
+    html: `<html><head><style>${base}</style></head><body><div class="wrap">
+      <div class="head"><h1>Delivered! ✅</h1><p>Your order has arrived</p></div>
+      <div class="body">
+        <p>Hi <strong>${data.name}</strong>, your order has been successfully delivered. Enjoy!</p>
+        <div class="card">
+          <div class="row"><div class="label">Order</div><span style="font-family:monospace;">#${data.orderNumber}</span></div>
+          ${data.deliveredAt ? `<div class="row"><div class="label">Delivered</div><span style="color:#10d988;">${data.deliveredAt}</span></div>` : ''}
+          ${data.total != null ? `<div class="row"><div class="label">Total</div><span class="price">$${data.total.toFixed(2)}</span></div>` : ''}
+        </div>
+        ${itemRows ? `<div class="card"><div class="label" style="margin-bottom:8px;">Items</div>${itemRows}</div>` : ''}
+        <p style="color:#5a6a8a;font-size:13px;">Love your purchase? Leave a review to help other shoppers.</p>
+        <div style="text-align:center;"><a href="${process.env.NEXT_PUBLIC_APP_URL}/account?tab=orders" class="btn">Leave a Review →</a></div>
       </div>
       <div class="footer">© ${new Date().getFullYear()} CortexCart</div>
     </div></body></html>`,

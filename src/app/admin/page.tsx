@@ -12,6 +12,7 @@ async function getStats() {
     prisma.order.aggregate({ where:{ status:{ not:'CANCELLED' } }, _sum:{ total:true } }),
     prisma.product.count({ where:{ stock:{ lte:5, gt:0 }, isActive:true } }),
     prisma.order.findMany({ orderBy:{ createdAt:'desc' }, take:8, include:{ items:{ take:1, include:{ product:{ select:{ name:true } } } } } }),
+    prisma.contactMessage.count({ where:{ status:'new' } }),
   ])
   return { orders, users, products, revenue:revenue._sum.total||0, lowStock, recent, msgs }
 }
