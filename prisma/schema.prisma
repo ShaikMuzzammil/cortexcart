@@ -1,6 +1,3 @@
-// CortexCart - Full Database Schema
-// PostgreSQL + pgvector
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,141 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────────
-// USERS & AUTH
-// ─────────────────────────────────────────────
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  password      String?
-  avatar        String?
-  role          Role      @default(CUSTOMER)
-  cluster       String?   // AI cluster label e.g. "Impulse Buyer"
-  clusterId     Int?
-  loyaltyPoints Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  sessions      Session[]
-  orders        Order[]
-  reviews       Review[]
-  wishlist      WishlistItem[]
-  interactions  Interaction[]
-  emailEvents   EmailEvent[]
-  abTestAssignments AbTestAssignment[]
-
-  @@map("users")
-}
-
 enum Role {
   CUSTOMER
   ADMIN
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  userId       String?
-  sessionToken String   @unique
-  clusterId    Int?
-  clusterLabel String?
-  deviceType   String?
-  geoRegion    String?
-  referralSource String?
-  createdAt    DateTime @default(now())
-  expiresAt    DateTime
-  user         User?    @relation(fields: [userId], references: [id])
-
-  @@map("sessions")
-}
-
-// ─────────────────────────────────────────────
-// PRODUCTS & CATALOG
-// ─────────────────────────────────────────────
-model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  image       String?
-  parentId    String?
-  parent      Category? @relation("SubCategories", fields: [parentId], references: [id])
-  children    Category[] @relation("SubCategories")
-  products    Product[]
-  createdAt   DateTime  @default(now())
-
-  @@map("categories")
-}
-
-model Product {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  name          String
-  description   String
-  basePrice     Float
-  currentPrice  Float
-  comparePrice  Float?
-  images        String[]
-  tags          String[]
-  brand         String?
-  sku           String    @unique
-  stock         Int       @default(0)
-  lowStockThreshold Int   @default(5)
-  weight        Float?
-  dimensions    Json?
-  attributes    Json?     // { color, size, material, ... }
-  rating        Float     @default(0)
-  reviewCount   Int       @default(0)
-  isActive      Boolean   @default(true)
-  isFeatured    Boolean   @default(false)
-  categoryId    String
-  category      Category  @relation(fields: [categoryId], references: [id])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  orderItems    OrderItem[]
-  reviews       Review[]
-  wishlistItems WishlistItem[]
-  interactions  Interaction[]
-  priceSnapshots PriceSnapshot[]
-  inventoryForecasts InventoryForecast[]
-
-  @@map("products")
-}
-
-// ─────────────────────────────────────────────
-// ORDERS
-// ─────────────────────────────────────────────
-model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique @default(cuid())
-  userId          String?
-  user            User?       @relation(fields: [userId], references: [id])
-  status          OrderStatus @default(PENDING)
-  subtotal        Float
-  tax             Float       @default(0)
-  shipping        Float       @default(0)
-  discount        Float       @default(0)
-  total           Float
-  currency        String      @default("USD")
-  paymentIntentId String?
-  paymentStatus   String?
-  shippingAddress Json
-  billingAddress  Json?
-  trackingNumber  String?
-  carrier         String?
-  estimatedDelivery DateTime?
-  deliveredAt     DateTime?
-  notes           String?
-  clusterIdAtPurchase Int?
-  dynamicPricingApplied Boolean @default(false)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  items           OrderItem[]
-  emailEvents     EmailEvent[]
-
-  @@map("orders")
 }
 
 enum OrderStatus {
@@ -152,198 +17,117 @@ enum OrderStatus {
   PAYMENT_CONFIRMED
   PROCESSING
   SHIPPED
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED
 }
 
-model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  quantity    Int
-  unitPrice   Float
-  totalPrice  Float
-  dynamicPrice Boolean @default(false)
-  createdAt   DateTime @default(now())
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  password       String?
+  role           Role      @default(CUSTOMER)
+  loyaltyPoints  Int       @default(0)
+  avatar         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  orders         Order[]
+  reviews        Review[]
+  @@map("users")
+}
 
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  createdAt   DateTime   @default(now())
+  products    Product[]
+  @@map("categories")
+}
+
+model Product {
+  id                String      @id @default(cuid())
+  slug              String      @unique
+  name              String
+  description       String
+  basePrice         Float
+  currentPrice      Float
+  comparePrice      Float?
+  images            String[]
+  tags              String[]
+  brand             String?
+  sku               String      @unique
+  stock             Int         @default(0)
+  lowStockThreshold Int         @default(10)
+  weight            Float?
+  dimensions        Json?
+  attributes        Json?
+  rating            Float       @default(0)
+  reviewCount       Int         @default(0)
+  isActive          Boolean     @default(true)
+  isFeatured        Boolean     @default(false)
+  dynamicPrice      Boolean     @default(false)
+  priceReason       String?
+  categoryId        String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  category          Category    @relation(fields:[categoryId], references:[id])
+  reviews           Review[]
+  orderItems        OrderItem[]
+  @@map("products")
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  orderNumber      String       @unique
+  userId           String?
+  status           OrderStatus  @default(PENDING)
+  subtotal         Float
+  tax              Float
+  shipping         Float
+  total            Float
+  shippingAddress  Json?
+  paymentStatus    String       @default("pending")
+  paymentMethod    String       @default("card")
+  trackingNumber   String?
+  carrier          String?
+  estimatedDelivery DateTime?
+  deliveredAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  user             User?        @relation(fields:[userId], references:[id])
+  items            OrderItem[]
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+  order      Order    @relation(fields:[orderId], references:[id], onDelete:Cascade)
+  product    Product  @relation(fields:[productId], references:[id])
   @@map("order_items")
 }
 
-// ─────────────────────────────────────────────
-// AI / ML TRACKING
-// ─────────────────────────────────────────────
-model Interaction {
-  id          String          @id @default(cuid())
-  userId      String?
-  user        User?           @relation(fields: [userId], references: [id])
-  sessionId   String?
-  productId   String?
-  product     Product?        @relation(fields: [productId], references: [id])
-  type        InteractionType
-  value       Float?          // time on page, scroll depth, etc.
-  metadata    Json?
-  createdAt   DateTime        @default(now())
-
-  @@index([userId, productId])
-  @@index([sessionId])
-  @@map("interactions")
-}
-
-enum InteractionType {
-  VIEW
-  CLICK
-  ADD_TO_CART
-  REMOVE_FROM_CART
-  PURCHASE
-  WISHLIST
-  REVIEW
-  SEARCH
-  SHARE
-}
-
-model PriceSnapshot {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  oldPrice    Float
-  newPrice    Float
-  clusterId   Int?
-  reason      String?  // "low_stock", "high_demand", "impulse_discount"
-  margin      Float?
-  createdAt   DateTime @default(now())
-
-  @@index([productId, createdAt])
-  @@map("price_snapshots")
-}
-
-model InventoryForecast {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  horizon30   Json?    // 30-day forecast data
-  horizon90   Json?    // 90-day forecast data
-  safetyStock Int?
-  reorderPoint Int?
-  forecastedAt DateTime @default(now())
-
-  @@map("inventory_forecasts")
-}
-
-// ─────────────────────────────────────────────
-// EMAIL EVENTS
-// ─────────────────────────────────────────────
-model EmailEvent {
-  id          String     @id @default(cuid())
-  userId      String?
-  user        User?      @relation(fields: [userId], references: [id])
-  orderId     String?
-  order       Order?     @relation(fields: [orderId], references: [id])
-  type        EmailType
-  resendId    String?
-  status      String?    // sent, delivered, opened, clicked, bounced
-  recipient   String
-  subject     String
-  openedAt    DateTime?
-  clickedAt   DateTime?
-  metadata    Json?
-  createdAt   DateTime   @default(now())
-
-  @@map("email_events")
-}
-
-enum EmailType {
-  WELCOME
-  ORDER_CONFIRMATION
-  SHIPPING_UPDATE
-  DELIVERY_CONFIRMATION
-  ABANDONED_CART
-  PRICE_DROP
-  BACK_IN_STOCK
-  RECOMMENDATION_DIGEST
-  CONTACT_REPLY
-  ADMIN_ALERT
-}
-
-// ─────────────────────────────────────────────
-// A/B TESTS
-// ─────────────────────────────────────────────
-model AbTest {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  type        String   // "hero_banner", "pricing_strategy", "layout"
-  variants    Json     // [{ id, name, weight, config }]
-  status      String   @default("RUNNING") // RUNNING, PAUSED, COMPLETED
-  startedAt   DateTime @default(now())
-  endedAt     DateTime?
-  winnerId    String?
-  assignments AbTestAssignment[]
-
-  @@map("ab_tests")
-}
-
-model AbTestAssignment {
-  id        String  @id @default(cuid())
-  testId    String
-  test      AbTest  @relation(fields: [testId], references: [id])
-  userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  variantId String
-  createdAt DateTime @default(now())
-
-  @@unique([testId, userId])
-  @@map("ab_test_assignments")
-}
-
-// ─────────────────────────────────────────────
-// REVIEWS & WISHLIST
-// ─────────────────────────────────────────────
 model Review {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  rating    Int      // 1-5
+  rating    Int
   title     String?
   body      String?
   verified  Boolean  @default(false)
-  helpful   Int      @default(0)
   createdAt DateTime @default(now())
-
+  user      User     @relation(fields:[userId], references:[id])
+  product   Product  @relation(fields:[productId], references:[id])
   @@unique([userId, productId])
   @@map("reviews")
-}
-
-model WishlistItem {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@map("wishlist_items")
-}
-
-// ─────────────────────────────────────────────
-// CONTACT MESSAGES
-// ─────────────────────────────────────────────
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String
-  message   String
-  category  String?  // "support", "partnership", "press", "general"
-  priority  String   @default("normal") // normal, high, urgent
-  status    String   @default("new")    // new, replied, closed
-  resendId  String?
-  createdAt DateTime @default(now())
-
-  @@map("contact_messages")
 }

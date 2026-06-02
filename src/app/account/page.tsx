@@ -1,380 +1,299 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import {
-  User, Package, Heart, Settings, LogOut, Star, Zap, Gift,
-  Bell, Lock, Save, Loader2, ChevronRight, Shield, Edit3,
-  CheckCircle2, Clock, Truck, CreditCard, XCircle, Eye
-} from 'lucide-react'
-import { formatPrice, formatDate, initials, cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 import { useWishlistStore } from '@/store/wishlist'
+import { useCartStore } from '@/store/cart'
+import { formatPrice, formatDate, cn } from '@/lib/utils'
+import Link from 'next/link'
+import Image from 'next/image'
+import { User, Package, Heart, Settings, LogOut, ShoppingCart, Star, Loader2, Save, Trash2, ExternalLink, Bell, Shield, CreditCard, CheckCircle2, Clock, Truck, MapPin } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-const TABS = [
-  { id: 'overview',  label: 'Overview',  icon: User },
-  { id: 'orders',    label: 'My Orders', icon: Package },
-  { id: 'wishlist',  label: 'Wishlist',  icon: Heart },
-  { id: 'settings',  label: 'Settings',  icon: Settings },
-]
-
-const ORDER_STATUS_COLOR: Record<string, string> = {
-  PENDING:           'bg-cx-muted/20 text-cx-muted',
-  PAYMENT_CONFIRMED: 'bg-cx-violet/10 text-cx-violet',
-  PROCESSING:        'bg-cx-sky/10 text-cx-sky',
-  SHIPPED:           'bg-cx-gold/10 text-cx-gold',
-  DELIVERED:         'bg-cx-emerald/10 text-cx-emerald',
-  CANCELLED:         'bg-cx-rose/10 text-cx-rose',
-  REFUNDED:          'bg-orange-500/10 text-orange-400',
-}
-
-const ORDER_STATUS_ICON: Record<string, any> = {
-  PENDING: Clock, PAYMENT_CONFIRMED: CreditCard, PROCESSING: Zap,
-  SHIPPED: Truck, DELIVERED: CheckCircle2, CANCELLED: XCircle, REFUNDED: XCircle,
+const STATUS_COLORS: Record<string, string> = {
+  DELIVERED:         'text-cx-emerald',
+  SHIPPED:           'text-cx-violet',
+  OUT_FOR_DELIVERY:  'text-cx-gold',
+  PAYMENT_CONFIRMED: 'text-cx-sky',
+  PROCESSING:        'text-cx-sky',
+  CANCELLED:         'text-cx-rose',
+  PENDING:           'text-cx-muted',
 }
 
 export default function AccountPage() {
   const { data: session, status, update } = useSession()
-  const router       = useRouter()
   const searchParams = useSearchParams()
-  const [tab,     setTab]     = useState(searchParams.get('tab') || 'overview')
+  const initTab = searchParams.get('tab') || 'overview'
+  const [tab,     setTab]     = useState(initTab)
   const [orders,  setOrders]  = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [saving,  setSaving]  = useState(false)
-  const [name,    setName]    = useState('')
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
-  const [notifs, setNotifs]   = useState({
-    orders: true, priceDrops: true, recommendations: false, marketing: false,
-  })
-  const wishlist = useWishlistStore(s => s.items)
-  const removeFromWishlist = useWishlistStore(s => s.toggle)
+  const [name,    setName]    = useState(session?.user?.name || '')
+  const [email,   setEmail]   = useState(session?.user?.email || '')
+  const wishItems  = useWishlistStore(s => s.items)
+  const wishToggle = useWishlistStore(s => s.toggle)
+  const addItem    = useCartStore(s => s.addItem)
+  const setOpen    = useCartStore(s => s.setCartOpen)
+
+  useEffect(() => { if (session?.user?.name) setName(session.user.name) }, [session])
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      toast.error('Please sign in to view your account')
-      router.push('/auth/login')
+    if (tab === 'orders' && session) {
+      setLoading(true)
+      fetch('/api/user/orders')
+        .then(r => r.json())
+        .then(d => setOrders(d.orders || []))
+        .catch(() => {})
+        .finally(() => setLoading(false))
     }
-  }, [status, router])
-
-  useEffect(() => {
-    if (session?.user?.name) setName(session.user.name)
-  }, [session])
-
-  useEffect(() => {
-    if (tab === 'orders' && session) fetchOrders()
   }, [tab, session])
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res  = await fetch('/api/user/orders')
-      const data = await res.json()
-      if (res.ok) setOrders(data.orders || [])
-      else toast.error('Failed to load orders')
-    } catch {
-      toast.error('Could not load orders')
-    }
-    setLoading(false)
-  }, [])
+  if (status === 'loading') return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 size={28} className="animate-spin text-cx-emerald" />
+    </div>
+  )
 
-  const saveSettings = async () => {
-    if (!name.trim()) { toast.error('Name cannot be empty'); return }
+  if (!session) return (
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="w-20 h-20 rounded-2xl bg-cx-surface border border-cx-border flex items-center justify-center mx-auto mb-5">
+          <User size={32} className="text-cx-muted opacity-40" />
+        </div>
+        <h2 className="font-display font-700 text-2xl text-white mb-3">Sign in Required</h2>
+        <p className="text-cx-muted text-[14px] mb-6">Access your orders, wishlist, and account settings.</p>
+        <div className="flex gap-3 justify-center">
+          <Link href="/auth/login"    className="btn-em px-6 py-3 text-[13px] font-700 rounded-xl">Sign In</Link>
+          <Link href="/auth/register" className="btn-outline-em px-6 py-3 text-[13px] rounded-xl">Register</Link>
+        </div>
+      </div>
+    </div>
+  )
+
+  const TABS = [
+    { id:'overview',  label:'Overview',  icon:User },
+    { id:'orders',    label:'My Orders', icon:Package },
+    { id:'wishlist',  label:'Wishlist',  icon:Heart,   badge: wishItems.length },
+    { id:'settings',  label:'Settings',  icon:Settings },
+  ]
+
+  const saveProfile = async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/user', {
+      const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       })
-      if (res.ok) {
-        await update({ name })
-        toast.success('Profile updated successfully!')
-      } else {
-        toast.error('Failed to save changes')
-      }
+      if (!res.ok) throw new Error('Failed')
+      await update({ name })
+      toast.success('Profile updated!')
     } catch {
-      toast.error('Something went wrong')
+      toast.error('Failed to update profile')
     }
     setSaving(false)
   }
 
-  const handleSignOut = async () => {
-    toast('Signing out…')
-    await signOut({ callbackUrl: '/' })
+  const moveWishToCart = (item: any) => {
+    addItem({ id: item.id, slug: item.slug, name: item.name, price: item.price, originalPrice: item.price, image: item.image, stock: 99 })
+    wishToggle(item)
+    setOpen(true)
+    toast.success(`${item.name} added to cart!`)
   }
 
-  if (status === 'loading') return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 size={32} className="animate-spin text-cx-emerald" />
-    </div>
-  )
-  if (!session) return null
-
-  const user = session.user as any
-
   return (
-    <div className="min-h-screen pt-6 pb-24 px-4 sm:px-6 lg:px-8 page-enter">
+    <div className="page-enter min-h-screen pt-8 pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-          {/* Sidebar */}
-          <aside className="space-y-4">
-            {/* Profile card */}
-            <div className="p-5 rounded-2xl cx-card-flat text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cx-violet to-cx-rose flex items-center justify-center mx-auto mb-3 text-2xl font-700 text-white shadow-cx-vio">
-                {initials(user.name || user.email || 'U')}
-              </div>
-              <h2 className="font-display font-700 text-white text-[15px]">{user.name || 'User'}</h2>
-              <p className="text-[11px] text-cx-muted mt-0.5 truncate">{user.email}</p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                {user.role === 'ADMIN' && <span className="badge-rose text-[10px]">Admin</span>}
-                <span className="badge-em text-[10px]">Member</span>
-              </div>
+        {/* Profile header */}
+        <div className="flex items-center gap-5 mb-8 p-6 rounded-3xl cx-card-flat">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cx-violet to-cx-rose flex items-center justify-center text-2xl font-800 text-white flex-shrink-0">
+            {(session.user?.name || session.user?.email || 'U')[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display font-800 text-xl text-white truncate">{session.user?.name || 'User'}</h1>
+            <p className="text-[12px] text-cx-muted truncate">{session.user?.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="badge-em text-[10px]">Active Account</span>
+              {(session.user as any)?.role === 'ADMIN' && (
+                <Link href="/admin" className="badge-gold text-[10px]">Admin</Link>
+              )}
             </div>
+          </div>
+          <button onClick={() => signOut({ callbackUrl: '/' })}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] text-cx-rose border border-cx-rose/25 hover:bg-cx-rose/10 transition-all">
+            <LogOut size={13}/> Sign Out
+          </button>
+        </div>
 
-            {/* Tab nav */}
-            <nav className="cx-card-flat overflow-hidden">
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)}
-                  className={cn('w-full flex items-center gap-3 px-4 py-3 text-[13px] font-600 transition-colors border-b border-cx-border last:border-0',
-                    tab === t.id ? 'bg-cx-emerald/8 text-cx-emerald' : 'text-cx-muted hover:text-cx-text hover:bg-white/3')}>
-                  <t.icon size={14} /> {t.label}
-                  {t.id === 'orders' && orders.length > 0 && (
-                    <span className="ml-auto badge-em text-[10px]">{orders.length}</span>
-                  )}
-                  {t.id === 'wishlist' && wishlist.length > 0 && (
-                    <span className="ml-auto badge-rose text-[10px]">{wishlist.length}</span>
-                  )}
-                </button>
-              ))}
-              <button onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-600 text-cx-rose hover:bg-cx-rose/8 transition-colors">
-                <LogOut size={14} /> Sign Out
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar tabs */}
+          <div className="space-y-1">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={cn('w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-600 transition-all',
+                  tab === t.id ? 'bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20' : 'text-cx-dim hover:text-cx-text hover:bg-white/3')}>
+                <t.icon size={15}/>
+                {t.label}
+                {(t as any).badge > 0 && (
+                  <span className="ml-auto badge-rose text-[9px] py-0.5">{(t as any).badge}</span>
+                )}
               </button>
-            </nav>
+            ))}
+            <button onClick={() => signOut({ callbackUrl: '/' })}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-600 text-cx-rose hover:bg-cx-rose/5 transition-all sm:hidden">
+              <LogOut size={15}/> Sign Out
+            </button>
+          </div>
 
-            {user.role === 'ADMIN' && (
-              <Link href="/admin"
-                className="flex items-center gap-3 p-4 rounded-2xl bg-cx-gold/8 border border-cx-gold/20 text-cx-gold text-[13px] font-600 hover:bg-cx-gold/12 transition-colors">
-                <Shield size={14} /> Admin Dashboard <ChevronRight size={13} className="ml-auto" />
-              </Link>
-            )}
-          </aside>
+          {/* Content */}
+          <div className="lg:col-span-3">
 
-          {/* Main content */}
-          <main className="lg:col-span-3 space-y-5">
-
-            {/* ── OVERVIEW ── */}
+            {/* ── OVERVIEW ─────────────────────────────────────────── */}
             {tab === 'overview' && (
               <div className="space-y-5 animate-fade-in">
-                <h2 className="font-display font-700 text-2xl text-white">Account Overview</h2>
-
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {[
-                    { label: 'Total Orders', value: loading ? '…' : orders.length, icon: Package, color: 'text-cx-emerald', bg: 'bg-cx-emerald/8', border: 'border-cx-emerald/20', action: () => setTab('orders') },
-                    { label: 'Wishlist Items', value: wishlist.length, icon: Heart, color: 'text-cx-rose', bg: 'bg-cx-rose/8', border: 'border-cx-rose/20', action: () => setTab('wishlist') },
-                    { label: 'Account Status', value: 'Active', icon: CheckCircle2, color: 'text-cx-gold', bg: 'bg-cx-gold/8', border: 'border-cx-gold/20', action: () => setTab('settings') },
+                    { label:'Orders',   value: orders.length || '—',  icon:Package,   color:'text-cx-emerald', action:() => setTab('orders') },
+                    { label:'Wishlist', value: wishItems.length,       icon:Heart,     color:'text-cx-rose',    action:() => setTab('wishlist') },
+                    { label:'Settings', value:'Profile',               icon:Settings,  color:'text-cx-violet',  action:() => setTab('settings') },
                   ].map(s => (
                     <button key={s.label} onClick={s.action}
-                      className={`p-5 rounded-2xl ${s.bg} border ${s.border} text-left hover:-translate-y-0.5 transition-all`}>
-                      <s.icon size={20} className={`${s.color} mb-2`} />
-                      <div className={`font-display font-800 text-2xl ${s.color}`}>{s.value}</div>
-                      <div className="text-[11px] text-cx-muted mt-0.5">{s.label}</div>
+                      className="p-5 rounded-2xl cx-card-flat text-left hover:-translate-y-1 transition-all duration-300">
+                      <s.icon size={20} className={cn(s.color, 'mb-3')}/>
+                      <p className="font-800 text-2xl text-white">{s.value}</p>
+                      <p className="text-[12px] text-cx-muted">{s.label}</p>
                     </button>
                   ))}
                 </div>
 
                 <div className="p-5 rounded-2xl cx-card-flat">
-                  <h3 className="font-600 text-[13px] text-cx-text mb-4 flex items-center gap-2">
-                    <User size={14} className="text-cx-emerald" /> Account Details
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <p className="font-700 text-[13px] text-cx-text mb-3">Account Details</p>
+                  <div className="space-y-3">
                     {[
-                      ['Full Name', user.name || '—'],
-                      ['Email',     user.email || '—'],
-                      ['Role',      user.role || 'Customer'],
-                      ['Status',    'Active & Verified'],
-                    ].map(([l, v]) => (
-                      <div key={l}>
-                        <p className="text-[10px] text-cx-muted uppercase tracking-wide">{l}</p>
-                        <p className="text-[13px] font-600 text-cx-text mt-0.5">{v}</p>
+                      { label:'Name',  value: session.user?.name || '—' },
+                      { label:'Email', value: session.user?.email || '—' },
+                      { label:'Role',  value: (session.user as any)?.role || 'CUSTOMER' },
+                    ].map(d => (
+                      <div key={d.label} className="flex justify-between py-2 border-b border-cx-border/40 text-[13px]">
+                        <span className="text-cx-muted">{d.label}</span>
+                        <span className="font-600 text-cx-text">{d.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Recent orders preview */}
-                {orders.length > 0 && (
-                  <div className="p-5 rounded-2xl cx-card-flat">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-600 text-[13px] text-cx-text">Recent Orders</h3>
-                      <button onClick={() => setTab('orders')} className="text-[11px] text-cx-emerald hover:underline">View all</button>
-                    </div>
-                    <div className="space-y-2">
-                      {orders.slice(0, 3).map(o => (
-                        <div key={o.id} className="flex items-center justify-between p-3 rounded-xl bg-cx-bg border border-cx-border">
-                          <div>
-                            <p className="text-[11px] font-700 text-cx-text font-mono">{o.orderNumber}</p>
-                            <p className="text-[10px] text-cx-muted">{formatDate(o.createdAt)}</p>
+            {/* ── ORDERS ───────────────────────────────────────────── */}
+            {tab === 'orders' && (
+              <div className="animate-fade-in">
+                <h2 className="font-700 text-[15px] text-white mb-5 flex items-center gap-2">
+                  <Package size={15} className="text-cx-emerald"/> My Orders
+                </h2>
+                {loading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 size={24} className="animate-spin text-cx-emerald"/>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-16 rounded-3xl cx-card-flat">
+                    <Package size={36} className="text-cx-muted opacity-30 mx-auto mb-4"/>
+                    <h3 className="font-700 text-[15px] text-cx-text mb-2">No orders yet</h3>
+                    <p className="text-cx-muted text-[13px] mb-5">Your orders will appear here after you shop.</p>
+                    <Link href="/products" className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl inline-flex items-center gap-2">
+                      Start Shopping
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map(order => {
+                      const sc = STATUS_COLORS[order.status] || 'text-cx-muted'
+                      return (
+                        <div key={order.id} className="p-5 rounded-2xl cx-card-flat hover:border-cx-emerald/15 transition-all">
+                          <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+                            <div>
+                              <span className="font-mono text-[12px] text-cx-emerald font-700">#{order.orderNumber}</span>
+                              <p className="text-[11px] text-cx-muted mt-0.5">{new Date(order.createdAt).toLocaleDateString('en-US', { dateStyle:'medium' })}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className={`font-700 text-[13px] ${sc}`}>{order.status?.replace(/_/g,' ')}</p>
+                              <p className="font-800 text-[16px] grad-emerald num mt-0.5">{formatPrice(order.total)}</p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-700 text-[12px] grad-emerald num">{formatPrice(o.total)}</span>
-                            <span className={cn('text-[9px] font-700 px-2 py-0.5 rounded-lg', ORDER_STATUS_COLOR[o.status] || 'bg-cx-border text-cx-muted')}>{o.status}</span>
+                          <div className="flex gap-2 flex-wrap mb-3">
+                            {order.items?.slice(0,3).map((item: any, i: number) => (
+                              <div key={i} className="relative w-10 h-10 rounded-lg overflow-hidden bg-cx-surface border border-cx-border flex-shrink-0">
+                                {item.product?.images?.[0]
+                                  ? <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover"/>
+                                  : <div className="flex items-center justify-center h-full text-sm">📦</div>}
+                              </div>
+                            ))}
+                            {(order.items?.length||0) > 3 && (
+                              <div className="w-10 h-10 rounded-lg bg-cx-surface border border-cx-border flex items-center justify-center text-[10px] text-cx-muted">
+                                +{order.items.length - 3}
+                              </div>
+                            )}
                           </div>
+                          <Link href={`/orders?q=${order.orderNumber}`}
+                            className="text-[12px] text-cx-emerald hover:underline flex items-center gap-1">
+                            Track Order <ExternalLink size={11}/>
+                          </Link>
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── ORDERS ── */}
-            {tab === 'orders' && (
-              <div className="animate-fade-in space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display font-700 text-2xl text-white">My Orders</h2>
-                  <button onClick={fetchOrders} className="text-[12px] text-cx-emerald hover:underline flex items-center gap-1">
-                    <Zap size={12} /> Refresh
-                  </button>
-                </div>
-
-                {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 size={28} className="animate-spin text-cx-emerald" />
-                  </div>
-                ) : orders.length === 0 ? (
-                  <div className="p-8 rounded-2xl cx-card-flat text-center">
-                    <Package size={40} className="text-cx-muted mx-auto mb-3" />
-                    <p className="font-600 text-cx-text mb-1">No orders yet</p>
-                    <p className="text-[13px] text-cx-muted mb-5">Your order history will appear here after your first purchase</p>
-                    <Link href="/products" className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl inline-flex items-center gap-2">
-                      Start Shopping <ChevronRight size={14} />
-                    </Link>
-                  </div>
-                ) : orders.map(order => {
-                  const StatusIcon = ORDER_STATUS_ICON[order.status] || Package
-                  const isExpanded = expandedOrder === order.id
-                  return (
-                    <div key={order.id} className="rounded-2xl cx-card-flat overflow-hidden">
-                      {/* Order header */}
-                      <div className="flex items-start justify-between p-5">
-                        <div className="flex items-start gap-3">
-                          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', ORDER_STATUS_COLOR[order.status] || 'bg-cx-border text-cx-muted')}>
-                            <StatusIcon size={16} />
-                          </div>
-                          <div>
-                            <p className="font-700 text-[13px] text-cx-text font-mono">{order.orderNumber}</p>
-                            <p className="text-[11px] text-cx-muted">{formatDate(order.createdAt)} · {order.items?.length || 0} item{order.items?.length !== 1 ? 's' : ''}</p>
-                            <span className={cn('text-[10px] font-700 px-2 py-0.5 rounded-lg mt-1 inline-block', ORDER_STATUS_COLOR[order.status])}>{order.status.replace(/_/g, ' ')}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-800 text-[16px] grad-emerald num">{formatPrice(order.total)}</p>
-                          <button onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                            className="text-[11px] text-cx-emerald hover:underline mt-1 flex items-center gap-1 ml-auto">
-                            <Eye size={11} /> {isExpanded ? 'Hide' : 'View'} details
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Expanded order details */}
-                      {isExpanded && (
-                        <div className="border-t border-cx-border p-5 space-y-4 animate-slide-down">
-                          {/* Items */}
-                          <div>
-                            <p className="text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-3">Items Ordered</p>
-                            <div className="space-y-2">
-                              {order.items?.map((item: any) => (
-                                <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-cx-bg border border-cx-border">
-                                  {item.product?.images?.[0] && (
-                                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-cx-card flex-shrink-0">
-                                      <img src={item.product.images[0]} alt={item.product?.name} className="w-full h-full object-cover" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-600 text-cx-text truncate">{item.product?.name}</p>
-                                    <p className="text-[11px] text-cx-muted">Qty: {item.quantity} × {formatPrice(item.unitPrice)}</p>
-                                  </div>
-                                  <span className="font-700 text-[13px] grad-emerald num flex-shrink-0">{formatPrice(item.totalPrice)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Order summary */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Delivery Details</p>
-                              <div className="p-3 rounded-xl bg-cx-bg border border-cx-border text-[12px] space-y-1">
-                                {order.shippingAddress && (
-                                  <>
-                                    <p className="font-600 text-cx-text">{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                                    <p className="text-cx-muted">{order.shippingAddress.line1}</p>
-                                    {order.shippingAddress.line2 && <p className="text-cx-muted">{order.shippingAddress.line2}</p>}
-                                    <p className="text-cx-muted">{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
-                                    <p className="text-cx-muted">{order.shippingAddress.country}</p>
-                                  </>
-                                )}
-                                {order.estimatedDelivery && (
-                                  <p className="text-cx-emerald font-600 pt-1">Est. delivery: {formatDate(order.estimatedDelivery)}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Price Breakdown</p>
-                              <div className="p-3 rounded-xl bg-cx-bg border border-cx-border text-[12px] space-y-1.5">
-                                <div className="flex justify-between text-cx-muted"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
-                                <div className="flex justify-between text-cx-muted"><span>Shipping</span><span>{order.shipping === 0 ? 'FREE' : formatPrice(order.shipping)}</span></div>
-                                <div className="flex justify-between text-cx-muted"><span>Tax</span><span>{formatPrice(order.tax)}</span></div>
-                                <div className="flex justify-between font-700 text-cx-text pt-1 border-t border-cx-border"><span>Total</span><span className="grad-emerald">{formatPrice(order.total)}</span></div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Track button */}
-                          <Link href={`/orders?q=${order.orderNumber}`}
-                            className="btn-outline-em w-full py-2.5 text-[12px] font-600 rounded-xl flex items-center justify-center gap-2">
-                            <Truck size={13} /> Track This Order
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* ── WISHLIST ── */}
+            {/* ── WISHLIST ─────────────────────────────────────────── */}
             {tab === 'wishlist' && (
-              <div className="animate-fade-in space-y-4">
-                <h2 className="font-display font-700 text-2xl text-white">My Wishlist ({wishlist.length})</h2>
-                {wishlist.length === 0 ? (
-                  <div className="p-8 rounded-2xl cx-card-flat text-center">
-                    <Heart size={40} className="text-cx-muted mx-auto mb-3" />
-                    <p className="font-600 text-cx-text mb-1">Your wishlist is empty</p>
-                    <Link href="/products" className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl inline-flex items-center gap-2 mt-4">
-                      Browse Products <ChevronRight size={14} />
+              <div className="animate-fade-in">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-700 text-[15px] text-white flex items-center gap-2">
+                    <Heart size={15} className="text-cx-rose"/> Wishlist ({wishItems.length})
+                  </h2>
+                  {wishItems.length > 0 && (
+                    <button onClick={() => {
+                      wishItems.forEach(i => { addItem({ id:i.id, slug:i.slug, name:i.name, price:i.price, originalPrice:i.price, image:i.image, stock:99 }); wishToggle(i) })
+                      setOpen(true)
+                      toast.success('All items moved to cart!')
+                    }} className="btn-em px-4 py-2 text-[12px] rounded-xl flex items-center gap-2">
+                      <ShoppingCart size={12}/> Move All to Cart
+                    </button>
+                  )}
+                </div>
+                {wishItems.length === 0 ? (
+                  <div className="text-center py-16 rounded-3xl cx-card-flat">
+                    <Heart size={36} className="text-cx-muted opacity-30 mx-auto mb-4"/>
+                    <h3 className="font-700 text-[15px] text-cx-text mb-2">Wishlist is empty</h3>
+                    <p className="text-cx-muted text-[13px] mb-5">Save products you love for later.</p>
+                    <Link href="/products" className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl inline-flex items-center gap-2">
+                      Browse Products
                     </Link>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {wishlist.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 p-4 rounded-2xl cx-card-flat hover:border-cx-emerald/20 transition-all">
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-cx-card flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    {wishItems.map(item => (
+                      <div key={item.id} className="flex gap-3 p-4 rounded-2xl cx-card-flat hover:border-cx-emerald/15 transition-all">
+                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-cx-surface border border-cx-border flex-shrink-0">
+                          {item.image
+                            ? <img src={item.image} alt={item.name} className="w-full h-full object-cover"/>
+                            : <div className="flex items-center justify-center h-full text-xl">📦</div>}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-600 text-[13px] text-cx-text truncate">{item.name}</p>
-                          <p className="grad-emerald font-800 text-[14px] num mt-0.5">{formatPrice(item.price)}</p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Link href={`/products/${item.slug}`} className="btn-outline-em px-3 py-1.5 text-[11px] rounded-lg">View</Link>
-                          <button onClick={() => { removeFromWishlist(item); toast('Removed from wishlist') }}
-                            className="px-3 py-1.5 text-[11px] rounded-lg border border-cx-rose/20 text-cx-rose hover:bg-cx-rose/10 transition-colors">
-                            Remove
-                          </button>
+                          <p className="font-800 text-[14px] grad-emerald num">{formatPrice(item.price)}</p>
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => moveWishToCart(item)}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] bg-cx-emerald/10 text-cx-emerald border border-cx-emerald/20 hover:bg-cx-emerald/20 transition-all">
+                              <ShoppingCart size={10}/> Add to Cart
+                            </button>
+                            <button onClick={() => wishToggle(item)}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] text-cx-rose hover:bg-cx-rose/10 transition-all">
+                              <Trash2 size={10}/>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -383,85 +302,69 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* ── SETTINGS ── */}
+            {/* ── SETTINGS ─────────────────────────────────────────── */}
             {tab === 'settings' && (
-              <div className="animate-fade-in space-y-5">
-                <h2 className="font-display font-700 text-2xl text-white">Account Settings</h2>
+              <div className="space-y-5 animate-fade-in">
+                <h2 className="font-700 text-[15px] text-white flex items-center gap-2">
+                  <Settings size={15} className="text-cx-violet"/> Account Settings
+                </h2>
 
                 {/* Profile */}
-                <div className="p-5 rounded-2xl cx-card-flat space-y-4">
-                  <h3 className="font-600 text-[13px] text-cx-text flex items-center gap-2">
-                    <Edit3 size={14} className="text-cx-emerald" /> Edit Profile
-                  </h3>
-                  <div>
-                    <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Display Name</label>
-                    <input value={name} onChange={e => setName(e.target.value)}
-                      className="cx-input w-full px-4 py-3 text-[13px]"
-                      placeholder="Your full name" />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Email Address</label>
-                    <input value={user.email || ''} disabled
-                      className="cx-input w-full px-4 py-3 text-[13px] opacity-60 cursor-not-allowed" />
-                    <p className="text-[11px] text-cx-muted mt-1">Contact support to change your email address</p>
-                  </div>
-                  <button onClick={saveSettings} disabled={saving}
-                    className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl flex items-center gap-2 disabled:opacity-60">
-                    {saving ? <><Loader2 size={13} className="animate-spin" />Saving…</> : <><Save size={13} />Save Changes</>}
-                  </button>
-                </div>
-
-                {/* Notifications */}
-                <div className="p-5 rounded-2xl cx-card-flat">
-                  <h3 className="font-600 text-[13px] text-cx-text mb-4 flex items-center gap-2">
-                    <Bell size={14} className="text-cx-violet" /> Notification Preferences
-                  </h3>
-                  {[
-                    { key: 'orders',          label: 'Order Updates',        desc: 'Shipping and delivery status notifications' },
-                    { key: 'priceDrops',      label: 'Price Drop Alerts',    desc: 'When wishlist items go on sale' },
-                    { key: 'recommendations', label: 'AI Recommendations',   desc: 'Personalised weekly product digest' },
-                    { key: 'marketing',       label: 'Promotions & Deals',   desc: 'Exclusive offers and new launches' },
-                  ].map(pref => (
-                    <div key={pref.key} className="flex items-center justify-between py-3 border-b border-cx-border last:border-0">
-                      <div>
-                        <p className="text-[13px] font-600 text-cx-text">{pref.label}</p>
-                        <p className="text-[11px] text-cx-muted">{pref.desc}</p>
-                      </div>
-                      <button onClick={() => setNotifs(n => ({ ...n, [pref.key]: !n[pref.key as keyof typeof n] }))}
-                        className={cn('w-11 h-6 rounded-full transition-colors relative flex-shrink-0', notifs[pref.key as keyof typeof notifs] ? 'bg-cx-emerald' : 'bg-cx-border')}>
-                        <div className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform', notifs[pref.key as keyof typeof notifs] ? 'translate-x-5' : 'translate-x-0.5')} />
-                      </button>
+                <div className="p-6 rounded-2xl cx-card-flat">
+                  <p className="font-700 text-[13px] text-cx-text mb-4">Profile Information</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-1.5">Display Name</label>
+                      <input value={name} onChange={e => setName(e.target.value)}
+                        className="cx-input w-full px-4 py-3 text-[13px]" placeholder="Your name"/>
                     </div>
-                  ))}
+                    <div>
+                      <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-1.5">Email</label>
+                      <input value={email} readOnly className="cx-input w-full px-4 py-3 text-[13px] opacity-50 cursor-not-allowed" />
+                      <p className="text-[11px] text-cx-muted mt-1">Email cannot be changed here.</p>
+                    </div>
+                    <button onClick={saveProfile} disabled={saving}
+                      className="btn-em px-6 py-2.5 text-[13px] font-700 rounded-xl flex items-center gap-2 disabled:opacity-60">
+                      {saving ? <Loader2 size={13} className="animate-spin"/> : <Save size={13}/>}
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Security */}
-                <div className="p-5 rounded-2xl cx-card-flat">
-                  <h3 className="font-600 text-[13px] text-cx-text mb-4 flex items-center gap-2">
-                    <Lock size={14} className="text-cx-sky" /> Security
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-cx-bg border border-cx-border">
-                      <div>
-                        <p className="text-[13px] font-600 text-cx-text">Password</p>
-                        <p className="text-[11px] text-cx-muted">Last changed: recently</p>
-                      </div>
-                      <button className="btn-outline-em px-4 py-1.5 text-[12px] rounded-lg">Change</button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-cx-bg border border-cx-border">
-                      <div>
-                        <p className="text-[13px] font-600 text-cx-text">Active Sessions</p>
-                        <p className="text-[11px] text-cx-muted">Manage where you're signed in</p>
-                      </div>
-                      <button onClick={handleSignOut} className="px-4 py-1.5 text-[12px] rounded-lg border border-cx-rose/20 text-cx-rose hover:bg-cx-rose/10 transition-colors">
-                        Sign Out All
-                      </button>
-                    </div>
+                <div className="p-6 rounded-2xl cx-card-flat">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield size={15} className="text-cx-emerald"/>
+                    <p className="font-700 text-[13px] text-cx-text">Security</p>
                   </div>
+                  <div className="space-y-3">
+                    {[
+                      { icon:CheckCircle2, label:'Password protected',      sub:'Your account is secured with a password', color:'text-cx-emerald' },
+                      { icon:Shield,       label:'SSL encrypted sessions',  sub:'All data transmitted securely',           color:'text-cx-emerald' },
+                      { icon:Bell,         label:'Email notifications',     sub:'Order updates sent to '+session.user?.email, color:'text-cx-sky' },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-start gap-3 p-3 rounded-xl bg-cx-surface border border-cx-border">
+                        <item.icon size={16} className={cn(item.color, 'mt-0.5 flex-shrink-0')}/>
+                        <div>
+                          <p className="font-600 text-[13px] text-cx-text">{item.label}</p>
+                          <p className="text-[11px] text-cx-muted">{item.sub}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Danger zone */}
+                <div className="p-6 rounded-2xl bg-cx-rose/5 border border-cx-rose/20">
+                  <p className="font-700 text-[13px] text-cx-rose mb-3">Danger Zone</p>
+                  <button onClick={() => signOut({ callbackUrl: '/' })}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] text-cx-rose border border-cx-rose/25 hover:bg-cx-rose/10 transition-all">
+                    <LogOut size={14}/> Sign Out of All Devices
+                  </button>
                 </div>
               </div>
             )}
-          </main>
+          </div>
         </div>
       </div>
     </div>

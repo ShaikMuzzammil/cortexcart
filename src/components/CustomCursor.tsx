@@ -3,65 +3,75 @@ import { useEffect, useRef } from 'react'
 
 export function CustomCursor() {
   const cursorRef  = useRef<HTMLDivElement>(null)
-  const dotRef     = useRef<HTMLDivElement>(null)
-  const pos        = useRef({ x: 0, y: 0 })
-  const smoothPos  = useRef({ x: 0, y: 0 })
-  const raf        = useRef<number>()
-  const hovered    = useRef(false)
+  const followerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    let mx = -100, my = -100, fx = -100, fy = -100
+    let hovering = false
+    let clicking = false
+    let animId: number
+
     const move = (e: MouseEvent) => {
-      pos.current = { x: e.clientX, y: e.clientY }
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`
-      }
+      mx = e.clientX; my = e.clientY
+    }
+    const down  = () => { clicking = true;  update() }
+    const up    = () => { clicking = false; update() }
+    const enter = () => { hovering = true;  update() }
+    const leave = () => { hovering = false; update() }
+
+    const update = () => {
+      const c = cursorRef.current
+      const f = followerRef.current
+      if (!c || !f) return
+      c.style.transform  = `translate(${mx - 4}px, ${my - 4}px) scale(${clicking ? 0.7 : 1})`
+      f.style.transform  = `translate(${fx - 14}px, ${fy - 14}px) scale(${hovering ? 1.6 : clicking ? 0.8 : 1})`
+      f.style.opacity    = hovering ? '0.4' : '0.15'
+      f.style.borderColor = hovering ? '#10d988' : '#8b5cf6'
     }
 
     const loop = () => {
-      smoothPos.current.x += (pos.current.x - smoothPos.current.x) * 0.12
-      smoothPos.current.y += (pos.current.y - smoothPos.current.y) * 0.12
-      if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${smoothPos.current.x - 20}px, ${smoothPos.current.y - 20}px)`
-      }
-      raf.current = requestAnimationFrame(loop)
+      fx += (mx - fx) * 0.12
+      fy += (my - fy) * 0.12
+      update()
+      animId = requestAnimationFrame(loop)
     }
 
-    const onEnter = () => {
-      hovered.current = true
-      cursorRef.current?.classList.add('scale-150', 'border-cx-emerald')
-    }
-    const onLeave = () => {
-      hovered.current = false
-      cursorRef.current?.classList.remove('scale-150', 'border-cx-emerald')
-    }
+    const INTERACTIVE = 'a,button,[role="button"],input,select,textarea,label,[data-hover]'
+    const els = document.querySelectorAll(INTERACTIVE)
+    els.forEach(el => { el.addEventListener('mouseenter', enter); el.addEventListener('mouseleave', leave) })
 
-    window.addEventListener('mousemove', move)
-    document.querySelectorAll('a,button,[role="button"]').forEach(el => {
-      el.addEventListener('mouseenter', onEnter)
-      el.addEventListener('mouseleave', onLeave)
+    document.addEventListener('mousemove', move)
+    document.addEventListener('mousedown', down)
+    document.addEventListener('mouseup',   up)
+    animId = requestAnimationFrame(loop)
+
+    const obs = new MutationObserver(() => {
+      document.querySelectorAll(INTERACTIVE).forEach(el => {
+        el.removeEventListener('mouseenter', enter)
+        el.removeEventListener('mouseleave', leave)
+        el.addEventListener('mouseenter', enter)
+        el.addEventListener('mouseleave', leave)
+      })
     })
+    obs.observe(document.body, { childList: true, subtree: true })
 
-    raf.current = requestAnimationFrame(loop)
     return () => {
-      window.removeEventListener('mousemove', move)
-      if (raf.current) cancelAnimationFrame(raf.current)
+      document.removeEventListener('mousemove', move)
+      document.removeEventListener('mousedown', down)
+      document.removeEventListener('mouseup',   up)
+      cancelAnimationFrame(animId)
+      obs.disconnect()
     }
   }, [])
 
   return (
     <>
-      {/* Trailing ring */}
-      <div
-        ref={cursorRef}
-        className="fixed top-0 left-0 w-10 h-10 rounded-full border border-cx-emerald/40 pointer-events-none z-[9999] transition-[width,height,border-color] duration-200 mix-blend-difference"
-        style={{ willChange: 'transform' }}
-      />
       {/* Dot */}
-      <div
-        ref={dotRef}
-        className="fixed top-0 left-0 w-2 h-2 rounded-full bg-cx-emerald pointer-events-none z-[9999]"
-        style={{ willChange: 'transform' }}
-      />
+      <div ref={cursorRef} className="fixed top-0 left-0 w-2 h-2 rounded-full bg-cx-emerald z-[9999] pointer-events-none transition-transform duration-75"
+        style={{ willChange:'transform', mixBlendMode:'normal', boxShadow:'0 0 8px rgba(16,217,136,0.8)' }}/>
+      {/* Ring */}
+      <div ref={followerRef} className="fixed top-0 left-0 w-7 h-7 rounded-full border-2 z-[9998] pointer-events-none transition-all duration-150"
+        style={{ willChange:'transform', borderColor:'#8b5cf6' }}/>
     </>
   )
 }
