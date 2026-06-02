@@ -9,9 +9,10 @@ import { generateOrderNumber } from '@/lib/utils'
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { items, shippingAddress, subtotal, tax, shipping, total, paymentMethod, paymentStatus } = body
+    const body    = await req.json()
+    const { items, shippingAddress, subtotal, tax, shipping, total } = body
 
+    // Get logged in user if any
     const session = await getServerSession(authOptions)
     let userId: string | undefined
 
@@ -32,9 +33,8 @@ export async function POST(req: Request) {
         shipping,
         total,
         shippingAddress,
-        paymentMethod: paymentMethod || 'card',
-        paymentStatus: paymentStatus || 'paid',
-        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        paymentStatus: 'paid',
+        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         items: {
           create: items.map((i: any) => ({
             productId:  i.productId,
@@ -45,46 +45,33 @@ export async function POST(req: Request) {
         },
       },
       include: {
-        items: {
-          include: {
-            product: { select: { name: true, brand: true, images: true } },
-          },
-        },
+        items: { include: { product: { select: { name: true } } } },
       },
     })
 
-    // Decrement stock (non-fatal)
+    // Decrement stock
     for (const item of items) {
       await prisma.product.update({
         where: { id: item.productId },
         data:  { stock: { decrement: item.quantity } },
-      }).catch(() => {})
+      }).catch(() => {}) // non-fatal
     }
 
-    // Send full confirmation email with product images
+    // Send confirmation email with full order details
     const recipientEmail = shippingAddress?.email || (session?.user?.email ?? null)
     if (recipientEmail) {
-      const deliveryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-
       sendOrderConfirmationEmail(recipientEmail, {
         orderNumber,
         name: `${shippingAddress?.firstName || ''} ${shippingAddress?.lastName || ''}`.trim() || session?.user?.name || 'Customer',
         items: order.items.map(i => ({
-          name:   i.product.name,
-          brand:  i.product.brand || undefined,
-          qty:    i.quantity,
-          price:  i.unitPrice,
-          image:  i.product.images?.[0] || undefined,
+          name:  i.product.name,
+          qty:   i.quantity,
+          price: i.unitPrice,
         })),
         total,
-        subtotal,
-        tax,
-        shipping,
-        estimatedDelivery: deliveryDate,
-        shippingAddress,
-        paymentMethod: paymentMethod || 'card',
-      }).catch(console.error)
+        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+          .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+      }).catch(console.error) // fire and forget
     }
 
     return NextResponse.json({ success: true, orderNumber, orderId: order.id })

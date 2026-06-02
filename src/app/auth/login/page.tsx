@@ -3,82 +3,86 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Zap, Loader2, Eye, EyeOff, AlertCircle, LogIn } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { Mail, Lock, Eye, EyeOff, Loader2, Zap, ArrowRight, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [showPwd,  setShowPwd]  = useState(false)
+  const [show,     setShow]     = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
 
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) { setError('Please fill in all fields'); return }
     setLoading(true); setError('')
-    const result = await signIn('credentials', { email, password, redirect: false })
+    const res = await signIn('credentials', { email, password, redirect: false })
     setLoading(false)
-    if (result?.error) {
-      setError('Incorrect email or password. Please check and try again.')
-      toast.error('Login failed')
-    } else {
-      toast.success('Welcome back! 👋')
-      router.push('/account')
-      router.refresh()
-    }
+    if (res?.error) { setError('Incorrect email or password. Please try again.'); return }
+    router.push('/account')
+    router.refresh()
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16 page-enter">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 justify-center mb-8 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cx-emerald to-cx-sky flex items-center justify-center shadow-[0_0_20px_rgba(16,217,136,0.3)] group-hover:shadow-[0_0_32px_rgba(16,217,136,0.5)] transition-all">
-            <Zap size={17} className="text-cx-bg"/>
-          </div>
-          <span className="font-display font-800 text-[18px] text-white">Cortex<span className="grad-emerald">Cart</span></span>
-        </Link>
+    <div className="min-h-screen flex items-center justify-center px-4 py-20">
+      <div className="fixed top-1/4 left-1/4 w-72 h-72 orb-vio rounded-full blur-[100px] opacity-25 pointer-events-none"/>
+      <div className="fixed bottom-1/4 right-1/4 w-56 h-56 orb-em rounded-full blur-[80px] opacity-18 pointer-events-none"/>
 
-        <div className="p-8 rounded-3xl cx-card-flat">
-          <h1 className="font-display font-800 text-2xl text-white mb-1 text-center">Welcome Back</h1>
-          <p className="text-cx-muted text-[13px] text-center mb-7">Sign in to your account</p>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 mb-6">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cx-emerald to-cx-sky flex items-center justify-center shadow-[0_0_20px_rgba(16,217,136,0.3)]">
+              <Zap size={18} className="text-cx-bg"/>
+            </div>
+            <span className="font-display font-800 text-xl text-white">Cortex<span className="grad-emerald">Cart</span></span>
+          </Link>
+          <h1 className="font-display font-800 text-3xl text-white mb-2">Welcome back</h1>
+          <p className="text-cx-muted text-[14px]">Sign in to continue shopping</p>
+        </div>
 
+        <div className="auth-card p-8">
           {error && (
-            <div className="flex items-start gap-2 p-3.5 rounded-xl bg-cx-rose/8 border border-cx-rose/25 mb-5 text-[12px] text-cx-rose">
-              <AlertCircle size={14} className="flex-shrink-0 mt-0.5"/>{error}
+            <div className="flex items-center gap-3 p-3 mb-5 rounded-xl bg-cx-rose/10 border border-cx-rose/20 text-[13px] text-cx-rose">
+              <AlertCircle size={15}/> {error}
             </div>
           )}
 
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-1.5">Email Address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                placeholder="your@email.com"
-                className="cx-input w-full px-4 py-3.5 text-[13px]" autoComplete="email"/>
-            </div>
-            <div>
-              <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-1.5">Password</label>
+              <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">Email Address</label>
               <div className="relative">
-                <input type={showPwd ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  className="cx-input w-full px-4 py-3.5 text-[13px] pr-11" autoComplete="current-password"/>
-                <button type="button" onClick={() => setShowPwd(!showPwd)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-cx-muted hover:text-cx-text transition-colors">
-                  {showPwd ? <EyeOff size={16}/> : <Eye size={16}/>}
+                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none"/>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                  placeholder="you@example.com" className="cx-input w-full pl-10 pr-4 py-3 text-[13px]"/>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-700 text-cx-muted uppercase tracking-wider">Password</label>
+              </div>
+              <div className="relative">
+                <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none"/>
+                <input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
+                  placeholder="••••••••" className="cx-input w-full pl-10 pr-10 py-3 text-[13px]"/>
+                <button type="button" onClick={() => setShow(!show)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cx-muted hover:text-cx-text transition-colors">
+                  {show ? <EyeOff size={15}/> : <Eye size={15}/>}
                 </button>
               </div>
             </div>
+
             <button type="submit" disabled={loading}
-              className="btn-em w-full py-4 text-[14px] font-700 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60 mt-2">
-              {loading ? <><Loader2 size={15} className="animate-spin"/> Signing in…</> : <><LogIn size={15}/> Sign In</>}
+              className="btn-em w-full py-3.5 text-[14px] rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 mt-2">
+              {loading
+                ? <><Loader2 size={15} className="animate-spin"/> Signing in…</>
+                : <><span>Sign In</span><ArrowRight size={15}/></>}
             </button>
           </form>
 
-          <p className="text-center text-[12px] text-cx-muted mt-6">
+          <p className="text-center text-[13px] text-cx-muted mt-5">
             Don't have an account?{' '}
-            <Link href="/auth/register" className="text-cx-emerald hover:underline font-600">Create one free →</Link>
+            <Link href="/auth/register" className="text-cx-emerald hover:underline font-600">Create one free</Link>
           </p>
         </div>
       </div>

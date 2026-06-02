@@ -1,6 +1,6 @@
-import './globals.css'
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans, Inter } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
+import './globals.css'
 import { Navbar }       from '@/components/Navbar'
 import { CartDrawer }   from '@/components/CartDrawer'
 import { ClientOnly }   from '@/components/ClientOnly'
@@ -8,58 +8,48 @@ import { CustomCursor } from '@/components/CustomCursor'
 import { AuthProvider } from '@/components/AuthProvider'
 import { Toaster }      from 'react-hot-toast'
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'], variable: '--font-display',
-  weight: ['400','500','600','700','800'],
-})
-const inter = Inter({
-  subsets: ['latin'], variable: '--font-body',
-  weight: ['400','500','600','700'],
-})
+const inter   = Inter({ subsets: ['latin'], variable: '--font-body' })
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display', weight: ['400','500','600','700','800'] })
+const mono    = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400','600','700'] })
 
 export const metadata: Metadata = {
-  title: 'CortexCart — AI-Powered Shopping',
-  description: 'Next-gen AI e-commerce: smart recommendations, real-time pricing, and seamless checkout.',
-  keywords: ['e-commerce','AI shopping','smart cart','electronics','gadgets'],
-  openGraph: {
-    title: 'CortexCart — AI-Powered Shopping',
-    description: 'Discover products curated by AI. Smart pricing, instant search, seamless checkout.',
-    type: 'website',
-  },
+  title:       { default: 'CortexCart — AI-Powered Commerce', template: '%s | CortexCart' },
+  description: 'Hyper-personalized AI shopping with dynamic pricing, semantic search, and real-time recommendations.',
+  keywords:    ['AI shopping', 'ecommerce', 'tech gadgets', 'dynamic pricing'],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="font-body text-cx-text antialiased bg-cx-bg">
+    <html lang="en" className={`${inter.variable} ${jakarta.variable} ${mono.variable}`}>
+      <body className="bg-cx-bg text-cx-text font-body antialiased overflow-x-hidden">
         <AuthProvider>
-          <div className="relative min-h-screen">
-            {/* Background ambient orbs */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-              <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-[180px] opacity-30" style={{background:'radial-gradient(circle,rgba(16,217,136,0.06) 0%,transparent 70%)'}}/>
-              <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[150px] opacity-20" style={{background:'radial-gradient(circle,rgba(139,92,246,0.08) 0%,transparent 70%)'}}/>
-              <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-15" style={{background:'radial-gradient(circle,rgba(245,183,49,0.05) 0%,transparent 70%)'}}/>
-            </div>
-
-            <div className="relative z-10">
-              <Navbar/>
-              <main>{children}</main>
-            </div>
+          {/* Ambient background */}
+          <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+            <div className="absolute inset-0" style={{background:'radial-gradient(ellipse 120% 80% at 50% -10%,rgba(139,92,246,0.18) 0%,transparent 60%),radial-gradient(ellipse 80% 60% at 80% 80%,rgba(16,217,136,0.08) 0%,transparent 50%),linear-gradient(180deg,#080b14 0%,#090c17 100%)'}} />
+            <div className="absolute top-0 left-1/3 w-[700px] h-[500px] orb-vio rounded-full blur-[140px] opacity-60" />
+            <div className="absolute top-1/2 right-0 w-[500px] h-[400px] orb-em rounded-full blur-[120px] opacity-35" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] orb-gold rounded-full blur-[120px] opacity-25" />
+            <div className="absolute bottom-1/3 right-1/3 w-[300px] h-[300px] orb-rose rounded-full blur-[100px] opacity-20" />
+            <div className="absolute inset-0 grid-bg opacity-25" />
           </div>
 
-          <ClientOnly>
-            <CartDrawer/>
-            <CustomCursor/>
-          </ClientOnly>
+          <div className="relative z-10">
+            <Navbar />
+            <main>{children}</main>
+            <ClientOnly>
+              <CartDrawer />
+              <CustomCursor />
+            </ClientOnly>
+          </div>
 
           <Toaster
             position="bottom-right"
             toastOptions={{
-              duration: 3500,
-              style: { background:'#0f1524', color:'#e8edf8', border:'1px solid #1c2540', borderRadius:'14px', fontSize:'13px', fontWeight:600 },
-              success: { iconTheme:{ primary:'#10d988', secondary:'#050810' } },
-              error:   { iconTheme:{ primary:'#f43f6e', secondary:'#fff' } },
-            }}/>
+              style: { background:'#131829', color:'#e8edf8', border:'1px solid #1e2640', borderRadius:'14px', fontSize:'13px' },
+              success: { iconTheme: { primary:'#10d988', secondary:'#131829' } },
+              error:   { iconTheme: { primary:'#f43f6e', secondary:'#131829' } },
+            }}
+          />
         </AuthProvider>
       </body>
     </html>
