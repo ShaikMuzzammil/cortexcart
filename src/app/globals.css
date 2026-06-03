@@ -249,3 +249,29 @@ input[type='range']::-webkit-slider-thumb { -webkit-appearance:none; width:18px;
 
 /* ── Ticker hidden (removed) ───────────── */
 .ticker-wrap { display: none; }
+
+/* Scrollbar hide */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Mobile bottom nav spacing */
+@media (max-width: 640px) {
+  main { padding-bottom: 60px; }
+}
+
+/* Smooth transitions */
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Product image fallback */
+.product-img-wrap { background: linear-gradient(135deg, #0e1220 0%, #131829 100%); }
+
+/* Gradient text */
+.grad-sky { background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.grad-gold { background: linear-gradient(135deg, #f5b731, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Enhanced focus styles */
+input:focus, select:focus, textarea:focus { outline: none; }
+
+/* Glass card hover */
+.cx-card { transition: border-color 0.2s, box-shadow 0.2s; }
+.cx-card:hover { border-color: rgba(16,217,136,0.12); }

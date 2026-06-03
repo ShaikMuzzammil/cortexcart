@@ -1,82 +1,145 @@
-export const dynamic = 'force-dynamic'
-
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { sendOrderConfirmationEmail } from '@/lib/email'
 import { generateOrderNumber } from '@/lib/utils'
+import { sendOrderConfirmationEmail, sendAdminNewOrderAlert } from '@/lib/email'
 
-export async function POST(req: Request) {
+export const dynamic = 'force-dynamic'
+
+function addBusinessDays(date: Date, days: number): Date {
+  let count = 0, d = new Date(date)
+  while (count < days) {
+    d.setDate(d.getDate() + 1)
+    if (d.getDay() !== 0 && d.getDay() !== 6) count++
+  }
+  return d
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const body    = await req.json()
-    const { items, shippingAddress, subtotal, tax, shipping, total } = body
-
-    // Get logged in user if any
     const session = await getServerSession(authOptions)
-    let userId: string | undefined
+    const body    = await req.json()
+    const { items, shippingAddress, subtotal, tax, shipping, total, couponCode, paymentMethod = 'card' } = body
 
-    if (session?.user?.email) {
-      const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-      if (user) userId = user.id
+    if (!items?.length || !shippingAddress) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const orderNumber = generateOrderNumber()
+    // Verify products exist and have stock
+    const productIds = items.map((i: any) => i.productId)
+    const products   = await prisma.product.findMany({ where: { id: { in: productIds }, isActive: true } })
+    if (products.length !== productIds.length) {
+      return NextResponse.json({ error: 'One or more products are unavailable' }, { status: 400 })
+    }
+    for (const item of items) {
+      const p = products.find(p => p.id === item.productId)
+      if (!p || p.stock < item.quantity) {
+        return NextResponse.json({ error: `Insufficient stock for ${p?.name || item.productId}` }, { status: 400 })
+      }
+    }
 
+    const orderNumber      = generateOrderNumber()
+    const estimatedDelivery = addBusinessDays(new Date(), 5)
+
+    // Create order
     const order = await prisma.order.create({
       data: {
         orderNumber,
-        userId: userId || null,
-        status: 'PAYMENT_CONFIRMED',
-        subtotal,
-        tax,
-        shipping,
+        userId: (session?.user as any)?.id || null,
+        status: 'PENDING',
+        subtotal, tax, shipping,
+        discount: 0,
         total,
+        currency: 'USD',
+        paymentStatus: paymentMethod === 'cod' ? 'pending_cod' : 'pending',
         shippingAddress,
-        paymentStatus: 'paid',
-        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        estimatedDelivery,
+        notes: paymentMethod === 'cod' ? 'Cash on Delivery' : null,
         items: {
           create: items.map((i: any) => ({
             productId:  i.productId,
             quantity:   i.quantity,
             unitPrice:  i.unitPrice,
             totalPrice: i.unitPrice * i.quantity,
-          })),
-        },
+          }))
+        }
       },
-      include: {
-        items: { include: { product: { select: { name: true } } } },
-      },
+      include: { items: { include: { product: true } } }
     })
 
     // Decrement stock
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data:  { stock: { decrement: item.quantity } },
-      }).catch(() => {}) // non-fatal
+    await Promise.all(items.map((i: any) =>
+      prisma.product.update({ where: { id: i.productId }, data: { stock: { decrement: i.quantity } } })
+    ))
+
+    // Track interaction
+    if ((session?.user as any)?.id) {
+      await prisma.interaction.createMany({
+        data: items.map((i: any) => ({
+          userId: (session.user as any).id,
+          productId: i.productId,
+          type: 'PURCHASE',
+          value: i.unitPrice * i.quantity,
+        }))
+      })
     }
 
-    // Send confirmation email with full order details
-    const recipientEmail = shippingAddress?.email || (session?.user?.email ?? null)
-    if (recipientEmail) {
-      sendOrderConfirmationEmail(recipientEmail, {
-        orderNumber,
-        name: `${shippingAddress?.firstName || ''} ${shippingAddress?.lastName || ''}`.trim() || session?.user?.name || 'Customer',
-        items: order.items.map(i => ({
-          name:  i.product.name,
-          qty:   i.quantity,
-          price: i.unitPrice,
-        })),
+    // Send detailed confirmation email
+    const customerEmail = shippingAddress.email
+    const customerName  = `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim()
+
+    if (customerEmail) {
+      const emailItems = order.items.map(oi => ({
+        name:     oi.product.name,
+        image:    oi.product.images[0] || '',
+        slug:     oi.product.slug,
+        quantity: oi.quantity,
+        price:    oi.unitPrice,
+        brand:    oi.product.brand || '',
+      }))
+
+      await sendOrderConfirmationEmail(customerEmail, {
+        customerName,
+        orderNumber: order.orderNumber,
+        orderId:     order.id,
+        items:       emailItems,
+        subtotal, tax, shipping, total,
+        shippingAddress,
+        paymentMethod,
+        estimatedDelivery: estimatedDelivery.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }),
+      }).catch(console.error)
+
+      await sendAdminNewOrderAlert({
+        orderNumber: order.orderNumber,
+        customerName,
+        customerEmail,
         total,
-        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-          .toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
-      }).catch(console.error) // fire and forget
+        itemCount: items.length,
+        paymentMethod,
+        items: emailItems,
+      }).catch(console.error)
+
+      // Log email event
+      await prisma.emailEvent.create({
+        data: {
+          orderId: order.id,
+          userId:  (session?.user as any)?.id || null,
+          type:    'ORDER_CONFIRMATION',
+          recipient: customerEmail,
+          subject: `Order Confirmed #${order.orderNumber.slice(-8).toUpperCase()}`,
+          status:  'sent',
+        }
+      }).catch(console.error)
     }
 
-    return NextResponse.json({ success: true, orderNumber, orderId: order.id })
+    return NextResponse.json({
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      estimatedDelivery: estimatedDelivery.toISOString(),
+    })
   } catch (err: any) {
-    console.error('[Checkout]', err)
-    return NextResponse.json({ error: 'Failed to place order' }, { status: 500 })
+    console.error('[CHECKOUT]', err)
+    return NextResponse.json({ error: err.message || 'Checkout failed' }, { status: 500 })
   }
 }

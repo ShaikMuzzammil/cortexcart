@@ -1,27 +1,24 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 import { sendContactEmail } from '@/lib/email'
-import { z } from 'zod'
+export const dynamic = 'force-dynamic'
 
-const schema = z.object({
-  name:     z.string().min(2).max(80),
-  email:    z.string().email(),
-  subject:  z.string().min(3).max(200),
-  message:  z.string().min(20).max(2000),
-  category: z.enum(['support','partnership','press','general']),
-  priority: z.enum(['normal','high','urgent']),
-})
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = schema.parse(await req.json())
-    const saved = await prisma.contactMessage.create({ data: body })
-    const result = await sendContactEmail(body)
-    if ((result as any)?.data?.id) await prisma.contactMessage.update({ where:{ id:saved.id }, data:{ resendId:(result as any).data.id } })
-    return NextResponse.json({ success:true })
-  } catch(err:any) {
-    if (err.name==='ZodError') return NextResponse.json({ error:err.errors[0]?.message??'Validation failed' }, { status:400 })
-    console.error('[Contact]', err)
-    return NextResponse.json({ error:'Failed to send message' }, { status:500 })
+    const body = await req.json()
+    const { name, email, subject, message, category='General Inquiry', priority='medium', phone='' } = body
+
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
+      return NextResponse.json({ error: 'Name, email, and message are required' }, { status: 400 })
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+    }
+
+    await sendContactEmail({ name, email, subject: subject || 'No subject', message, category, priority })
+
+    return NextResponse.json({ success: true, message: 'Message sent successfully! We\'ll respond within 24–48 hours.' })
+  } catch(err: any) {
+    console.error('[CONTACT]', err)
+    return NextResponse.json({ error: 'Failed to send message. Please try again.' }, { status: 500 })
   }
 }
