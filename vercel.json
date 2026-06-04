@@ -1,11 +1,13 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --ignore-scripts",
+  "outputDirectory": ".next",
   "regions": ["iad1"],
+  "env": {
+    "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
+  },
   "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 30
-    }
+    "src/app/api/**/*.ts": { "maxDuration": 30 }
   }
 }

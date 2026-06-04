@@ -275,3 +275,30 @@ input:focus, select:focus, textarea:focus { outline: none; }
 /* Glass card hover */
 .cx-card { transition: border-color 0.2s, box-shadow 0.2s; }
 .cx-card:hover { border-color: rgba(16,217,136,0.12); }
+
+/* ── GODMODE ADDITIONS ──────────────────────────────────────────────── */
+.orb-em   { background: radial-gradient(circle, rgba(16,217,136,0.12) 0%, transparent 70%); }
+.orb-gold { background: radial-gradient(circle, rgba(245,183,49,0.10) 0%, transparent 70%); }
+.orb-rose { background: radial-gradient(circle, rgba(244,63,110,0.10) 0%, transparent 70%); }
+.orb-sky  { background: radial-gradient(circle, rgba(56,189,248,0.10) 0%, transparent 70%); }
+
+/* Scrollbar hide */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Notification dot pulse */
+@keyframes notif-ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }
+.notif-ping::before { content: ''; position: absolute; inset: 0; border-radius: 9999px; background: #10d988; animation: notif-ping 1.5s ease-out infinite; }
+
+/* Page transitions */
+.page-enter { animation: fadeIn 0.35s ease-out; }
+
+/* Mobile bottom padding */
+@media (max-width: 640px) { main { padding-bottom: 72px; } }
+
+/* Gradient text utilities */
+.grad-sky    { background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.grad-gold   { background: linear-gradient(135deg, #f5b731, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Focus ring */
+*:focus-visible { outline: 2px solid rgba(16,217,136,0.5); outline-offset: 2px; border-radius: 6px; }

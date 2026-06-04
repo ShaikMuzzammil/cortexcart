@@ -1,170 +1,104 @@
 # ⚡ CortexCart GODMODE v2.0
 
-The most advanced AI-powered shopping cart experience. Built with Next.js 14, Prisma, PostgreSQL, Framer Motion, Tailwind CSS, and Resend.
+> AI-powered shopping platform — Next.js 14 · Prisma 5.17 · PostgreSQL · Framer Motion · Resend
 
 ---
 
-## 🚀 Features
+## 🚀 Local Setup
 
-### 🛒 Cart & Checkout
-- Real-time cart with quantity controls, save-for-later, and bulk operations
-- **Coupon codes**: CORTEX10 (10% off), FIRST15 (15% off), SAVE20 ($20 off), FREESHIP (free shipping), FLASH25 (25% off)
-- Live free-shipping progress bar
-- **Two payment methods**: Online (card) + Cash on Delivery (COD)
-- 3 shipping speed options (Standard / Express / Overnight)
-- Animated checkout stepper with live order summary
-
-### 📦 Order Tracking
-- Public order tracking page (`/track`) — no login needed
-- Real-time status timeline: Placed → Processing → Shipped → Out for Delivery → Delivered
-- Tracking number + carrier displayed when shipped
-
-### 🔔 Notifications
-- Persistent notification bell with unread count badge
-- Tabs: All / Unread / Orders / Deals
-- Cart abandonment nudge
-- Wishlist price-drop alerts (demo)
-- Welcome promo notification
-
-### 📧 Email System (Resend)
-- Detailed order confirmation (itemized with product images, timeline, address)
-- Admin alert on every new order
-- Welcome email with promo code
-- Shipping update email with tracking
-- Out-for-delivery notification
-- Delivery confirmation + review request
-- Price-drop wishlist alerts
-- Contact form auto-reply
-
-### 🏪 Products (80+)
-Across 6 categories: Electronics · Wearables · Audio · Computing · Photography · Gaming
-
-### 🎨 UI/UX
-- Scroll progress gradient bar
-- Announcement bar with dismissal
-- Active navigation highlighting with animated indicator
-- Mobile bottom navigation bar
-- Live search with instant results (Cmd/Ctrl+K shortcut)
-- Full responsive design with mobile-first layouts
-
----
-
-## 🛠 Setup
-
-### 1. Install dependencies
+### 1. Install
 ```bash
 npm install
 ```
 
 ### 2. Environment variables
-Create `.env` from `.env.example`:
+Create a `.env` file (copy from `.env.example`):
 ```env
-DATABASE_URL="postgresql://user:pass@host:5432/cortexcart"
+DATABASE_URL="postgresql://user:pass@host:5432/cortexcart?sslmode=require"
+DIRECT_URL="postgresql://user:pass@host:5432/cortexcart?sslmode=require"
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-here-min-32-chars"
+NEXTAUTH_SECRET="run: openssl rand -base64 32"
 RESEND_API_KEY="re_xxxxxxxxxxxx"
 RESEND_FROM_EMAIL="CortexCart <onboarding@resend.dev>"
-CONTACT_EMAIL_TO="admin@cortexcart.com"
+CONTACT_EMAIL_TO="admin@yourdomain.com"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 3. Database setup
+### 3. Database
 ```bash
 npx prisma generate
 npx prisma db push
 npm run db:seed
 ```
 
-### 4. Run development server
+### 4. Run
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
-
 ---
 
-## 🚀 Deploy to Vercel
+## 🚀 Deploy to Vercel (Step-by-Step)
 
-### Step 1: Push to GitHub
+### Step 1 — Push to GitHub
 ```bash
 git init
 git add .
 git commit -m "feat: CortexCart GODMODE v2.0"
+git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/cortexcart.git
 git push -u origin main
 ```
 
-### Step 2: Create Vercel Project
-1. Go to [vercel.com](https://vercel.com) → New Project
-2. Import your GitHub repository
-3. Set **Root Directory** to `/` (or subdirectory if needed)
-4. Set **Framework**: Next.js
+### Step 2 — Create Database (Neon.tech — Free)
+1. Go to [neon.tech](https://neon.tech) → New Project
+2. Copy the **Connection String** (pooled) → this is your `DATABASE_URL`
+3. Copy the **Direct Connection String** → this is your `DIRECT_URL`
 
-### Step 3: Environment Variables in Vercel
-Add these in Vercel Dashboard → Settings → Environment Variables:
+### Step 3 — Create Resend Account (Free)
+1. Go to [resend.com](https://resend.com) → Sign up
+2. API Keys → Create API Key → copy it
 
-| Variable | Value |
-|----------|-------|
-| `DATABASE_URL` | Your PostgreSQL connection string |
-| `NEXTAUTH_URL` | `https://your-app.vercel.app` |
-| `NEXTAUTH_SECRET` | Run `openssl rand -base64 32` |
-| `RESEND_API_KEY` | From [resend.com](https://resend.com) |
-| `RESEND_FROM_EMAIL` | `CortexCart <onboarding@resend.dev>` |
-| `CONTACT_EMAIL_TO` | Your admin email |
-| `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` |
+### Step 4 — Create Vercel Project
+1. [vercel.com](https://vercel.com) → New Project → Import GitHub repo
+2. **Framework Preset**: Next.js
+3. **Build Command**: `npm run build` _(already set in vercel.json)_
+4. **Install Command**: `npm install --ignore-scripts` _(set in vercel.json)_
 
-### Step 4: Build Settings
+### Step 5 — Add Environment Variables in Vercel
 ```
-Build Command:    npx prisma generate && next build
-Output Directory: .next
-Install Command:  npm install
+DATABASE_URL          = postgresql://...pooled-url...?sslmode=require
+DIRECT_URL            = postgresql://...direct-url...?sslmode=require
+NEXTAUTH_URL          = https://your-project.vercel.app
+NEXTAUTH_SECRET       = (generate: openssl rand -base64 32)
+RESEND_API_KEY        = re_xxxxxxxxxxxx
+RESEND_FROM_EMAIL     = CortexCart <onboarding@resend.dev>
+CONTACT_EMAIL_TO      = admin@yourdomain.com
+NEXT_PUBLIC_APP_URL   = https://your-project.vercel.app
 ```
 
-### Step 5: Database (Neon.tech - Free PostgreSQL)
-1. Go to [neon.tech](https://neon.tech) → New project
-2. Copy the connection string
-3. Add as `DATABASE_URL` in Vercel
-
-### Step 6: After first deploy, run seed
+### Step 6 — Deploy & Seed
+After first deploy:
 ```bash
-# In Vercel terminal or locally with production DATABASE_URL:
+# Option A: Vercel CLI
+npx vercel env pull .env.local
 npm run db:seed
+
+# Option B: Set DATABASE_URL locally to production DB, then:
+DATABASE_URL="your-neon-url" npm run db:seed
 ```
 
 ---
 
-## 📁 Project Structure
+## 🎯 Build & Deploy Commands Summary
 
-```
-src/
-├── app/
-│   ├── page.tsx              # Homepage
-│   ├── products/             # Product listing + detail pages
-│   ├── checkout/             # Multi-step checkout
-│   ├── orders/               # Order history
-│   ├── track/                # Public order tracking
-│   ├── wishlist/             # Wishlist page
-│   ├── account/              # User account
-│   ├── contact/              # Contact form with FAQ
-│   ├── admin/                # Admin dashboard
-│   └── api/                  # All API routes
-├── components/
-│   ├── Navbar.tsx            # Navbar with announcements + notifications
-│   ├── CartDrawer.tsx        # Enhanced slide-out cart
-│   ├── NotificationBell.tsx  # Real-time notification system
-│   ├── NotificationManager.tsx # Background notification triggers
-│   ├── ScrollProgress.tsx    # Top scroll progress bar
-│   └── ProductCard.tsx       # Product card with quick-view
-├── store/
-│   ├── cart.ts               # Zustand cart store (coupons, save-for-later)
-│   ├── notifications.ts      # Notification store
-│   └── wishlist.ts           # Wishlist store
-└── lib/
-    ├── email.ts              # All email templates (Resend)
-    ├── auth.ts               # NextAuth config
-    └── prisma.ts             # Prisma client
-```
+| Command | Description |
+|---------|-------------|
+| `npm install --ignore-scripts` | Install without triggering postinstall |
+| `npm run build` | `prisma generate && next build` |
+| `npm run db:push` | Push schema to DB (no migration files) |
+| `npm run db:seed` | Seed 35+ products, 2 users |
+| `npm run db:studio` | Open Prisma Studio |
 
 ---
 
@@ -179,26 +113,76 @@ src/
 
 | Code | Discount |
 |------|----------|
-| CORTEX10 | 10% off |
-| FIRST15 | 15% off |
-| SAVE20 | $20 off |
-| FREESHIP | Free shipping |
-| FLASH25 | 25% off |
+| `CORTEX10` | 10% off |
+| `FIRST15` | 15% off first order |
+| `SAVE20` | $20 flat discount |
+| `FREESHIP` | Free shipping |
+| `FLASH25` | 25% flash sale |
+
+---
+
+## 📦 What's New in v2.0
+
+### ✅ Prisma Schema Fixes
+- **Explicit `@relation` names** on all relations (fixes Prisma 5.22 validation)
+- **Multi-line enum format** (prevents parser issues)
+- **Pinned to Prisma 5.17.0 exact** (no caret ^, prevents auto-upgrade to 5.22)
+- Added `VerificationToken` model (required for NextAuth email providers)
+- Added `DIRECT_URL` datasource for Neon serverless connection pooling
+- Renamed `InteractionType.REVIEW` → `ITEM_REVIEW` (avoids model name conflict)
+- Removed `postinstall: prisma generate` (prevents double-generate on Vercel)
+- `vercel.json` uses `--ignore-scripts` on install
+
+### 🔔 Notification System
+- Real-time bell in navbar with unread badge + shake animation
+- 4 tabs: All / Unread / Orders / Deals
+- Cart abandonment nudge after 30 min inactivity
+- Wishlist price-drop alerts
+- Welcome promo on first visit
+
+### 🛒 Enhanced Cart
+- Coupon code system (5 working codes)
+- Free shipping progress bar
+- Save for later shelf
+- Estimated delivery date
+- Tax + shipping breakdown
+- Trust badges
+
+### 💳 Dual Payment Checkout
+- **Online** (card with Visa/MC/Amex) + **Cash on Delivery**
+- 3 shipping speeds
+- Animated stepper with field validation
+- Canvas confetti on success
+
+### 📧 Rich Email System (Resend)
+- Order confirmation with product images + order timeline
+- Admin alert on every new order
+- Shipping / out-for-delivery / delivered emails
+- Welcome email with promo code
+
+### 🎯 Navigation
+- Active section highlighting with animated indicator
+- Announcement bar (dismissable with version tracking)
+- Cmd/Ctrl+K live search
+- Mobile bottom navigation bar
+- Scroll progress gradient bar
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Database**: PostgreSQL via Prisma ORM
-- **Auth**: NextAuth.js v4
-- **Styling**: Tailwind CSS + custom design tokens
-- **Animations**: Framer Motion
-- **Email**: Resend
-- **State**: Zustand (persisted)
-- **Icons**: Lucide React
-- **Deployment**: Vercel + Neon
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 14 App Router |
+| Database | PostgreSQL via Prisma 5.17 |
+| Auth | NextAuth.js v4 |
+| Styling | Tailwind CSS + CSS custom properties |
+| Animation | Framer Motion 11 |
+| Email | Resend |
+| State | Zustand 5 (persisted) |
+| Icons | Lucide React |
+| Hosting | Vercel + Neon |
 
 ---
 
-Built with ⚡ by CortexCart Team
+*Built with ⚡ — CortexCart GODMODE v2.0*
