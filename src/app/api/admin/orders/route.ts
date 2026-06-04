@@ -19,11 +19,11 @@ export async function GET(req: Request) {
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
+      skip:     (page - 1) * limit,
+      take:     limit,
+      orderBy:  { createdAt: 'desc' },
       include: {
-        user: { select: { name: true, email: true } },
+        user:  { select: { name: true, email: true } },
         items: { include: { product: { select: { name: true, images: true } } } },
       },
     }),
@@ -56,55 +56,62 @@ export async function PATCH(req: Request) {
       ...(status === 'DELIVERED' && { deliveredAt: new Date() }),
     },
     include: {
-      user: { select: { name: true, email: true } },
-      items: { include: { product: { select: { name: true, images: true } } } },
+      user:  { select: { name: true, email: true } },
+      items: { include: { product: { select: { name: true, images: true, slug: true } } } },
     },
   })
 
-  const customerEmail = order.shippingAddress
-    ? (order.shippingAddress as any).email
-    : order.user?.email
+  const customerEmail: string | undefined = (
+    (order.shippingAddress as any)?.email ||
+    order.user?.email ||
+    undefined
+  )
 
-  const customerName = order.user?.name
-    || `${(order.shippingAddress as any)?.firstName||''} ${(order.shippingAddress as any)?.lastName||''}`.trim()
-    || 'Customer'
+  const customerName = (
+    order.user?.name ||
+    `${(order.shippingAddress as any)?.firstName || ''} ${(order.shippingAddress as any)?.lastName || ''}`.trim() ||
+    'Customer'
+  )
 
   const orderItems = order.items.map(i => ({
-    name:  i.product.name,
-    qty:   i.quantity,
-    price: i.unitPrice,
-    image: i.product.images?.[0] || undefined,
+    name:     i.product.name,
+    slug:     i.product.slug || '',
+    quantity: i.quantity,
+    price:    i.unitPrice,
+    image:    i.product.images?.[0] || '',
   }))
 
-  // Send status-specific notification email
   if (customerEmail) {
     if (status === 'SHIPPED') {
+      // sendShippingEmail expects: { customerName, orderNumber, trackingNumber, carrier, estimatedDelivery, items }
       sendShippingEmail(customerEmail, {
-        name: customerName,
-        orderNumber: order.orderNumber,
-        trackingNumber,
-        carrier,
-        estimatedDelivery: order.estimatedDelivery?.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) || '5–7 business days',
+        customerName,
+        orderNumber:      order.orderNumber,
+        trackingNumber:   trackingNumber || 'TRK-000000',
+        carrier:          carrier        || 'Standard Carrier',
+        estimatedDelivery: order.estimatedDelivery
+          ? order.estimatedDelivery.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })
+          : '5–7 business days',
         items: orderItems,
       }).catch(console.error)
     }
 
     if (status === 'OUT_FOR_DELIVERY') {
+      // sendOutForDeliveryEmail expects: { customerName, orderNumber, estimatedWindow }
       sendOutForDeliveryEmail(customerEmail, {
-        name: customerName,
-        orderNumber: order.orderNumber,
-        estimatedTime: 'Today between 9 AM – 6 PM',
-        items: orderItems,
+        customerName,
+        orderNumber:     order.orderNumber,
+        estimatedWindow: 'Today between 9 AM – 6 PM',
       }).catch(console.error)
     }
 
     if (status === 'DELIVERED') {
+      // sendDeliveredEmail expects: { customerName, orderNumber, items, total }
       sendDeliveredEmail(customerEmail, {
-        name: customerName,
+        customerName,
         orderNumber: order.orderNumber,
-        deliveredAt: new Date().toLocaleString('en-US', { dateStyle:'full', timeStyle:'short' }),
-        items: orderItems,
-        total: order.total,
+        items:       orderItems,
+        total:       order.total,
       }).catch(console.error)
     }
   }

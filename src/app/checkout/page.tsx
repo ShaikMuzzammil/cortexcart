@@ -514,7 +514,7 @@ export default function CheckoutPage() {
               </div>
               {/* Trust */}
               <div className="cx-card p-4 space-y-3">
-                {[{ icon:Shield, text:'256-bit SSL encryption' },{ icon:BadgeCheck, text:'Verified secure payments' },{ icon:RotateCcw||Lock, text:'30-day return guarantee' }].map(({icon: Icon, text}) => (
+                {[{ icon:Shield, text:'256-bit SSL encryption' },{ icon:BadgeCheck, text:'Verified secure payments' },{ icon:RotateCcw, text:'30-day return guarantee' }].map(({icon: Icon, text}) => (
                   <div key={text} className="flex items-center gap-3 text-[12px] text-cx-muted">
                     <Icon size={14} className="text-cx-emerald" />{text}
                   </div>
