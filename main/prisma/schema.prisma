@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL") // Uncomment for Neon serverless pooling
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String?
+  password      String?
+  role          Role         @default(CUSTOMER)
+  image         String?
+  emailVerified DateTime?
+  loyaltyPoints Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  orders        Order[]      @relation("UserOrders")
+  reviews       Review[]     @relation("UserReviews")
+  interactions  Interaction[]@relation("UserInteractions")
+  accounts      Account[]    @relation("UserAccounts")
+  sessions      Session[]    @relation("UserSessions")
+  emailEvents   EmailEvent[] @relation("UserEmailEvents")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  parentId    String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+
+  @@map("categories")
+}
+
+model Product {
+  id                String        @id @default(cuid())
+  slug              String        @unique
+  sku               String        @unique
+  name              String
+  description       String        @db.Text
+  brand             String?
+  categoryId        String
+  category          Category      @relation(fields: [categoryId], references: [id])
+  images            String[]
+  tags              String[]
+  basePrice         Float
+  currentPrice      Float
+  comparePrice      Float?
+  stock             Int           @default(0)
+  lowStockThreshold Int           @default(10)
+  rating            Float         @default(0)
+  reviewCount       Int           @default(0)
+  isActive          Boolean       @default(true)
+  isFeatured        Boolean       @default(false)
+  isDeal            Boolean       @default(false)
+  attributes        Json?
+  views             Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  orderItems        OrderItem[]
+  reviews           Review[]      @relation("ProductReviews")
+  interactions      Interaction[] @relation("ProductInteractions")
+
+  @@map("products")
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  userId            String?
+  user              User?       @relation("UserOrders", fields: [userId], references: [id])
+  status            OrderStatus @default(PENDING)
+  paymentStatus     String      @default("pending")
+  paymentMethod     String?
+  subtotal          Float
+  tax               Float
+  shipping          Float
+  discount          Float       @default(0)
+  total             Float
+  currency          String      @default("USD")
+  shippingAddress   Json
+  trackingNumber    String?
+  carrier           String?
+  notes             String?
+  estimatedDelivery DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  items             OrderItem[]
+  emailEvents       EmailEvent[] @relation("OrderEmailEvents")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+  createdAt  DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation("ProductReviews", fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("UserReviews", fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  title     String?
+  body      String?  @db.Text
+  helpful   Int      @default(0)
+  verified  Boolean  @default(false)
+  images    String[]
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+  @@map("reviews")
+}
+
+model Interaction {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation("UserInteractions", fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product         @relation("ProductInteractions", fields: [productId], references: [id], onDelete: Cascade)
+  type      InteractionType
+  value     Float?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  @@map("interactions")
+}
+
+model EmailEvent {
+  id        String    @id @default(cuid())
+  orderId   String?
+  order     Order?    @relation("OrderEmailEvents", fields: [orderId], references: [id])
+  userId    String?
+  user      User?     @relation("UserEmailEvents", fields: [userId], references: [id])
+  type      String
+  recipient String
+  subject   String
+  status    String    @default("pending")
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("email_events")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  PAYMENT_CONFIRMED
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum InteractionType {
+  VIEW
+  WISHLIST
+  CART_ADD
+  CART_REMOVE
+  PURCHASE
+  ITEM_REVIEW
+  SEARCH
+}

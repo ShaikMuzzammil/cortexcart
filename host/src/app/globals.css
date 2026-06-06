@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  background: #07090f;
+  color: #c0cfe8;
+  font-family: 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d1018; }
+::-webkit-scrollbar-thumb { background: #1a2035; border-radius: 3px; }
+
+.card {
+  background: #111520;
+  border: 1px solid #1a2035;
+  border-radius: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #10d988, #0a9e62);
+  color: #07090f;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.input {
+  background: #0d1018;
+  border: 1px solid #1a2035;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #c0cfe8;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input:focus { border-color: #10d988; }
+
+.badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
