@@ -39,7 +39,7 @@ export default function AccountPage() {
   const [loadingO, setLoadO]  = useState(false)
   const [expanded, setExpanded]= useState<string | null>(null)
   const [copied,   setCopied]  = useState<string | null>(null)
-  const { items: wishlistItems, removeItem } = useWishlistStore()
+  const { items: wishlistItems, toggle: toggleWishlist } = useWishlistStore()
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/login?callbackUrl=/account')
@@ -308,7 +308,7 @@ export default function AccountPage() {
                             className="flex-1 text-center py-1.5 rounded-lg bg-cx-emerald/10 text-cx-emerald text-[11px] font-700 hover:bg-cx-emerald/20 transition-all">
                             View
                           </Link>
-                          <button onClick={() => removeItem(item.id)}
+                          <button onClick={() => toggleWishlist(item)}
                             className="flex-1 text-center py-1.5 rounded-lg bg-cx-rose/10 text-cx-rose text-[11px] font-700 hover:bg-cx-rose/20 transition-all">
                             Remove
                           </button>
