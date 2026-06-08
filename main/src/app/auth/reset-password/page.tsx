@@ -7,6 +7,7 @@ import {
   AlertCircle, ShieldCheck, XCircle
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 function StrengthBar({ password }: { password: string }) {
   const checks = [
