@@ -26,6 +26,7 @@ const NAV_LINKS = [
   { label: 'Featured', href: '/products?featured=true' },
   { label: 'Deals',    href: '/products?deals=true' },
   { label: 'Contact',  href: '/contact' },
+  { label: 'AI Picks', href: '/recommendations' },
 ]
 
 const ANNOUNCEMENT_VERSION = 'v3'

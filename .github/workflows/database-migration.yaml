@@ -1,0 +1,38 @@
+name: Database Migration
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Prisma DB Push → Neon
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: main
+        run: npm install --ignore-scripts
+
+      - name: Generate Prisma Client
+        working-directory: main
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Push schema to database
+        working-directory: main
+        run: npx prisma db push --skip-generate --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
