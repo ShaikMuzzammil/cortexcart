@@ -90,7 +90,8 @@ function ProductCard({ p }: { p: Product }) {
         <div className="flex gap-2 pt-1">
           <button onClick={() => {
             addItem({ id: p.id, slug: p.slug, name: p.name, price: p.price,
-              brand: p.brand, image: p.image, quantity: 1 })
+              originalPrice: p.compare || p.price, image: p.image,
+              stock: 99, brand: p.brand || undefined })
             toast.success('Added to cart!')
           }}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cx-emerald/15 text-cx-emerald text-[11px] font-700 hover:bg-cx-emerald/25 transition-all">
