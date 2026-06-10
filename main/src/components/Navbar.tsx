@@ -12,12 +12,14 @@ import { cn, initials }     from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const CATEGORIES = [
-  { label: 'Electronics',  href: '/products?category=electronics', icon: Cpu,        color: 'text-cx-sky' },
-  { label: 'Wearables',    href: '/products?category=wearables',   icon: Watch,      color: 'text-cx-emerald' },
-  { label: 'Audio',        href: '/products?category=audio',       icon: Headphones, color: 'text-cx-violet' },
-  { label: 'Computing',    href: '/products?category=computing',   icon: Monitor,    color: 'text-cx-gold' },
-  { label: 'Photography',  href: '/products?category=photography', icon: Camera,     color: 'text-cx-rose' },
-  { label: 'Gaming',       href: '/products?category=gaming',      icon: Gamepad2,   color: 'text-cx-emerald' },
+  { label: 'Tech',     href: '/products?category=tech',    icon: Cpu,        color: 'text-cx-sky'     },
+  { label: 'Gaming',   href: '/products?category=gaming',  icon: Gamepad2,   color: 'text-cx-violet'  },
+  { label: 'Home',     href: '/products?category=home',    icon: Monitor,    color: 'text-cx-emerald' },
+  { label: 'Fashion',  href: '/products?category=fashion', icon: Watch,      color: 'text-cx-gold'    },
+  { label: 'Sports',   href: '/products?category=sports',  icon: Camera,     color: 'text-cx-rose'    },
+  { label: 'Music',    href: '/products?category=music',   icon: Headphones, color: 'text-cx-sky'     },
+  { label: 'Office',   href: '/products?category=office',  icon: Cpu,        color: 'text-cx-dim'     },
+  { label: 'Travel',   href: '/products?category=travel',  icon: Camera,     color: 'text-cx-emerald' },
 ]
 
 const NAV_LINKS = [

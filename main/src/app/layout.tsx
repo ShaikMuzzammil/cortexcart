@@ -8,6 +8,7 @@ import { CustomCursor }        from '@/components/CustomCursor'
 import { AuthProvider }        from '@/components/AuthProvider'
 import { NotificationManager } from '@/components/NotificationManager'
 import { ScrollProgress }      from '@/components/ScrollProgress'
+import { AIChatFloat }         from '@/components/AIChatFloat'
 import { Toaster }             from 'react-hot-toast'
 
 const inter   = Inter({ subsets:['latin'], variable:'--font-body' })
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <CartDrawer />
               <CustomCursor />
               <NotificationManager />
+              <AIChatFloat />
             </ClientOnly>
           </div>
 
