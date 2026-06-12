@@ -183,10 +183,30 @@ async function main() {
 
   // Products
   let seeded = 0
+  // Build per-category image pools so each product gets 3 RELATED
+  // (same-category) but DISTINCT images — not 3 copies of the same one.
+  const catImagePool: Record<string, string[]> = {}
+  for (const p of PRODUCTS) {
+    if (!catImagePool[p.c]) catImagePool[p.c] = []
+    if (!catImagePool[p.c].includes(p.img)) catImagePool[p.c].push(p.img)
+  }
+  const relatedImages = (p: P): string[] => {
+    const pool = catImagePool[p.c] || [p.img]
+    const others = pool.filter(u => u !== p.img)
+    const out = [p.img]
+    for (let i = 0; out.length < 3 && others.length > 0; i++) {
+      out.push(others[i % others.length])
+    }
+    // Pad if category pool too small
+    while (out.length < 3) out.push(p.img)
+    return out
+  }
+
   for (const p of PRODUCTS) {
     const slug = sl(p.n)
     const catId = catMap[p.c]
     if (!catId) { console.warn(`⚠️  No category for ${p.c}`); continue }
+    const images = relatedImages(p)
 
     await prisma.product.upsert({
       where: { sku: p.sku },
@@ -195,13 +215,12 @@ async function main() {
         basePrice: p.cp, currentPrice: p.p, comparePrice: p.cp,
         stock: p.s, rating: p.r, reviewCount: p.rc,
         isFeatured: p.f, isDeal: p.d,
-        images: [p.img, p.img, p.img],
-        tags: p.t, isActive: true,
+        images, tags: p.t, isActive: true,
       },
       create: {
         sku: p.sku, slug, name: p.n,
         description: p.desc, brand: p.sku.split('-')[0],
-        categoryId: catId, images: [p.img, p.img, p.img], tags: p.t,
+        categoryId: catId, images, tags: p.t,
         basePrice: p.cp, currentPrice: p.p, comparePrice: p.cp,
         stock: p.s, rating: p.r, reviewCount: p.rc,
         isFeatured: p.f, isDeal: p.d, isActive: true,

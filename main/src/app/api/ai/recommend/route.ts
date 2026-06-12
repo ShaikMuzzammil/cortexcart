@@ -132,17 +132,20 @@ export async function POST(req: Request) {
     }
 
     /* Keyword fallback — always works, no API key needed */
-    const words   = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2)
-    const orClauses = words.flatMap((w: string) => [
-      { name:        { contains: w, mode: 'insensitive' as const } },
-      { brand:       { contains: w, mode: 'insensitive' as const } },
-      { description: { contains: w, mode: 'insensitive' as const } },
-      { tags:        { has: w } },
-      { category:    { name: { contains: w, mode: 'insensitive' as const } } },
-    ])
+    const words     = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2)
+    const firstWord = words[0] || query.toLowerCase()
 
     const fallback = await prisma.product.findMany({
-      where: { isActive: true, OR: orClauses.length ? orClauses : [{ isActive: true }] },
+      where: {
+        isActive: true,
+        OR: [
+          { name:        { contains: query, mode: 'insensitive' } },
+          { brand:       { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { tags:        { hasSome: words.length ? words : [firstWord] } },
+          { category:    { is: { name: { contains: firstWord, mode: 'insensitive' } } } },
+        ],
+      },
       include: { category: { select: { name: true } } },
       take: 4,
       orderBy: { reviewCount: 'desc' },

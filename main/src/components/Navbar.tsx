@@ -234,7 +234,7 @@ export function Navbar() {
                     <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-cx-rose text-white text-[9px] font-800 flex items-center justify-center">{wishlistCount}</span>
                   )}
                 </Link>
-                <button onClick={() => useCartStore.getState().setOpen?.(true)}
+                <button onClick={() => useCartStore.getState().setCartOpen(true)}
                   className="relative p-2 rounded-xl text-cx-dim hover:text-cx-text hover:bg-cx-card transition-all">
                   <ShoppingCart size={18}/>
                   {cartCount > 0 && (
@@ -271,7 +271,7 @@ export function Navbar() {
                           { href:'/account', icon:User, label:'My Account' },
                           { href:'/orders', icon:Package, label:'My Orders' },
                           { href:'/wishlist', icon:Heart, label:'Wishlist' },
-                          ...(session.user.role === 'ADMIN' ? [{ href:'/admin', icon:Settings, label:'Admin' }] : []),
+                          ...((session.user as any)?.role === 'ADMIN' ? [{ href:'/admin', icon:Settings, label:'Admin' }] : []),
                         ].map(item => (
                           <Link key={item.href} href={item.href}
                             className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-cx-card transition-all">

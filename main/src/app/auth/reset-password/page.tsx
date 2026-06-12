@@ -4,8 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, Eye, EyeOff, Loader2, Zap, CheckCircle2, AlertCircle, ShieldCheck, XCircle } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
-
 function strength(pw: string) {
   const checks = [pw.length >= 8, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^a-zA-Z0-9]/.test(pw)]
   return checks.filter(Boolean).length
