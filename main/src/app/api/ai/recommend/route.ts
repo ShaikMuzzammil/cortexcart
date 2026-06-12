@@ -132,8 +132,8 @@ export async function POST(req: Request) {
     }
 
     /* Keyword fallback — always works, no API key needed */
-    const words   = query.toLowerCase().split(/\s+/).filter(w => w.length > 2)
-    const orClauses = words.flatMap(w => [
+    const words   = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2)
+    const orClauses = words.flatMap((w: string) => [
       { name:        { contains: w, mode: 'insensitive' as const } },
       { brand:       { contains: w, mode: 'insensitive' as const } },
       { description: { contains: w, mode: 'insensitive' as const } },
