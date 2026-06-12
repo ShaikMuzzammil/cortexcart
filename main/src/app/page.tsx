@@ -234,6 +234,146 @@ export default async function HomePage() {
         </section>
       )}
 
+
+      {/* ── WHY CORTEXCART ────────────────────────── */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-cx-surface/30 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="badge-em mb-3 inline-block">Why CortexCart?</span>
+            <h2 className="font-display font-800 text-4xl sm:text-5xl text-white mt-3 mb-4">
+              Shopping, <span className="grad-multi">Reimagined</span>
+            </h2>
+            <p className="text-cx-dim text-[15px] max-w-2xl mx-auto">
+              We combined cutting-edge AI with a curated catalog across 12 categories — 
+              so you always find exactly what you need, at the best price.
+            </p>
+          </div>
+
+          {/* Comparison table */}
+          <div className="overflow-x-auto mb-16">
+            <div className="min-w-[640px]">
+              <div className="grid grid-cols-4 gap-0 rounded-2xl overflow-hidden border border-cx-border">
+                {/* Header */}
+                <div className="bg-cx-surface px-5 py-4 text-[11px] font-700 text-cx-muted uppercase tracking-wider">Feature</div>
+                {[
+                  { name:'CortexCart', color:'text-cx-emerald', bg:'bg-cx-emerald/8 border-r border-l border-cx-emerald/20' },
+                  { name:'Amazon',     color:'text-cx-dim',     bg:'bg-cx-surface' },
+                  { name:'Flipkart',   color:'text-cx-dim',     bg:'bg-cx-surface' },
+                ].map(store => (
+                  <div key={store.name} className={`${store.bg} px-5 py-4 text-center`}>
+                    <span className={`text-[13px] font-800 ${store.color}`}>{store.name}</span>
+                    {store.name === 'CortexCart' && <span className="ml-2 text-[9px] bg-cx-emerald/20 text-cx-emerald px-2 py-0.5 rounded-full font-700 uppercase">You're here</span>}
+                  </div>
+                ))}
+                {[
+                  ['AI Product Matching',    '✦ Neural engine',  '✗ Keyword only',  '✗ Basic search'],
+                  ['Batch Recommendations',  '✦ CSV/TXT upload', '✗ Not available', '✗ Not available'],
+                  ['Real-time Price Alerts', '✦ Automated',      '~ Manual wishlist','~ Manual'],
+                  ['No Fake Reviews',        '✦ Verified only',  '✗ Mixed quality', '~ Partial'],
+                  ['Order Tracking Live',    '✦ Step-by-step',   '~ Basic',         '~ Basic'],
+                  ['24/7 AI Support',        '✦ Instant',        '~ Bot + wait',    '~ Limited'],
+                  ['12 Product Categories',  '✦ Curated',        '✦ Vast',          '✦ Large'],
+                  ['Privacy First',          '✦ Zero data sell', '✗ Ad-data',       '~ Partial'],
+                ].map(([feat, cx, am, fk], i) => (
+                  <div key={feat} className={`contents`}>
+                    <div className={`px-5 py-3.5 text-[12px] font-600 text-cx-dim ${i%2===0?'bg-cx-bg/30':''} border-t border-cx-border/30`}>{feat}</div>
+                    {[cx, am, fk].map((val, vi) => (
+                      <div key={vi} className={`px-5 py-3.5 text-center text-[12px] ${i%2===0?'bg-cx-bg/30':''} border-t border-cx-border/30 ${vi===0?'border-r border-l border-cx-emerald/10 bg-cx-emerald/4':''}`}>
+                        <span className={val.startsWith('✦')?'text-cx-emerald font-700':val.startsWith('~')?'text-cx-gold':'text-cx-muted'}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Key advantages */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { title:'AI-Powered Discovery', icon:'🧠', color:'border-cx-violet/20 bg-cx-violet/4', textColor:'text-cx-violet',
+                desc:'Our neural recommendation engine learns from your browsing and instantly surfaces products you\'ll love — not just what\'s trending.' },
+              { title:'Batch Search', icon:'📦', color:'border-cx-sky/20 bg-cx-sky/4', textColor:'text-cx-sky',
+                desc:'Upload a CSV or TXT with multiple product queries. Our AI processes all of them at once and returns curated matches — perfect for bulk purchasing.' },
+              { title:'Live Order Tracking', icon:'🚚', color:'border-cx-emerald/20 bg-cx-emerald/4', textColor:'text-cx-emerald',
+                desc:'Track any order with a 5-step visual timeline. From placement to delivery — every status update is pushed in real-time.' },
+              { title:'Verified Reviews Only', icon:'✅', color:'border-cx-gold/20 bg-cx-gold/4', textColor:'text-cx-gold',
+                desc:'Every review is linked to a verified purchase. No fake reviews, no paid rankings — just genuine feedback from real buyers.' },
+              { title:'12 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
+                desc:'From Tech to Pets, Office to Kitchen — 119+ hand-curated products across 12 distinct categories, each with expert-picked recommendations.' },
+              { title:'Privacy First', icon:'🔒', color:'border-cx-sky/20 bg-cx-sky/4', textColor:'text-cx-sky',
+                desc:'We never sell your data to advertisers. Your shopping history, preferences, and personal info stay completely private and secure.' },
+            ].map(adv => (
+              <div key={adv.title} className={`p-6 rounded-2xl border ${adv.color} hover:scale-[1.02] transition-all duration-200`}>
+                <div className="text-3xl mb-4">{adv.icon}</div>
+                <h3 className={`text-[15px] font-800 ${adv.textColor} mb-2`}>{adv.title}</h3>
+                <p className="text-[13px] text-cx-muted leading-relaxed">{adv.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BATCH PREVIEW SECTION ─────────────────── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-cx-sky/20 p-8 sm:p-12">
+            <div className="absolute inset-0 bg-gradient-to-br from-cx-sky/5 via-cx-bg to-cx-violet/8"/>
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px]" style={{background:'rgba(56,189,248,0.08)'}}/>
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <span className="badge-sky mb-4 inline-block">New Feature</span>
+                <h2 className="font-display font-800 text-3xl sm:text-4xl text-white mb-4">
+                  Batch Recommendations
+                </h2>
+                <p className="text-cx-dim text-[15px] leading-relaxed mb-6">
+                  Need to find 10 products at once? Upload a CSV or TXT file with your queries, and our AI finds the best 
+                  match from our catalog for each one — with links to buy instantly.
+                </p>
+                <div className="space-y-3 mb-8">
+                  {['Upload CSV or TXT with product queries (up to 20)','AI matches each query to real products in our catalog','Export results as CSV — with prices, ratings, and buy links'].map(item => (
+                    <div key={item} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-cx-sky/15 border border-cx-sky/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-cx-sky text-[10px] font-800">✓</span>
+                      </div>
+                      <span className="text-[13px] text-cx-dim">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/batch" className="inline-flex items-center gap-2 bg-gradient-to-r from-cx-sky to-cx-violet text-white font-800 text-[14px] px-6 py-3 rounded-2xl hover:opacity-90 transition-opacity">
+                  <Sparkles size={15}/> Try Batch Recommendations →
+                </Link>
+              </div>
+              <div className="bg-cx-surface border border-cx-border rounded-2xl p-4 font-mono text-[12px]">
+                <div className="flex items-center gap-1.5 mb-3 pb-3 border-b border-cx-border">
+                  {['bg-cx-rose/60','bg-cx-gold/60','bg-cx-emerald/60'].map((c,i) => <div key={i} className={`w-2.5 h-2.5 rounded-full ${c}`}/>)}
+                  <span className="text-cx-muted text-[10px] ml-2">batch-queries.txt</span>
+                </div>
+                <div className="space-y-1 text-cx-dim mb-4">
+                  {['gaming mouse wireless','mechanical keyboard rgb','27 inch monitor 144hz','gaming headset anc','desk lamp led'].map(line => (
+                    <p key={line} className="text-cx-dim">{line}</p>
+                  ))}
+                </div>
+                <div className="border-t border-cx-border pt-3 space-y-1.5">
+                  {[
+                    {q:'gaming mouse',n:'VortexShot Gaming Mouse',p:'$69'},
+                    {q:'keyboard rgb',n:'LunaKey RGB 75%',p:'$169'},
+                    {q:'27" monitor',n:'MonitorX 27" 280Hz',p:'$449'},
+                  ].map(r => (
+                    <div key={r.q} className="flex items-center gap-2">
+                      <span className="text-cx-emerald">✦</span>
+                      <span className="text-cx-dim">{r.q} →</span>
+                      <span className="text-cx-text font-600">{r.n}</span>
+                      <span className="ml-auto text-cx-emerald font-700">{r.p}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── TESTIMONIALS ──────────────────────────── */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

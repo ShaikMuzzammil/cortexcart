@@ -1,8 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, Loader2, Zap, ArrowLeft, CheckCircle2, AlertCircle, Send } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Mail, Loader2, Zap, CheckCircle2, AlertCircle, Send } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('')
@@ -15,111 +14,88 @@ export default function ForgotPasswordPage() {
     setLoading(true); setError('')
     try {
       const res  = await fetch('/api/auth/forgot-password', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body:   JSON.stringify({ email }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:  JSON.stringify({ email }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
       setSent(true)
-    } catch (e: any) {
-      setError(e.message)
-    }
+    } catch (e: any) { setError(e.message) }
     setLoading(false)
   }
 
+  const base: React.CSSProperties = {
+    minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+    padding:'80px 16px', background:'#080b14', fontFamily:'inherit',
+  }
+  const card: React.CSSProperties = {
+    background:'#0d1221', border:'1px solid #1e2640', borderRadius:20,
+    padding:'32px', width:'100%', maxWidth:400,
+  }
+  const inputStyle: React.CSSProperties = {
+    width:'100%', background:'#0a0f1e', border:'1px solid #1e2640', borderRadius:12,
+    padding:'12px 12px 12px 40px', color:'#e8edf8', fontSize:13, outline:'none', boxSizing:'border-box' as const,
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20">
-      <div className="fixed top-1/4 left-1/4 w-72 h-72 orb-vio rounded-full blur-[100px] opacity-20 pointer-events-none"/>
-      <div className="fixed bottom-1/4 right-1/4 w-56 h-56 orb-em  rounded-full blur-[80px]  opacity-15 pointer-events-none"/>
-
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cx-emerald to-cx-sky flex items-center justify-center shadow-[0_0_20px_rgba(16,217,136,0.3)]">
-              <Zap size={18} className="text-cx-bg"/>
+    <div style={base}>
+      <div style={{ position:'fixed', top:'30%', left:'30%', width:300, height:300, borderRadius:'50%', background:'rgba(139,92,246,0.07)', filter:'blur(100px)', pointerEvents:'none' }}/>
+      <div style={{ width:'100%', maxWidth:400, position:'relative' }}>
+        <div style={{ textAlign:'center', marginBottom:28 }}>
+          <Link href="/" style={{ display:'inline-flex', alignItems:'center', gap:8, textDecoration:'none', marginBottom:20 }}>
+            <div style={{ width:40, height:40, borderRadius:14, background:'linear-gradient(135deg,#10d988,#38bdf8)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Zap size={18} color="#080b14"/>
             </div>
-            <span className="font-display font-800 text-xl text-white">Cortex<span className="grad-emerald">Cart</span></span>
+            <span style={{ fontWeight:900, fontSize:20, color:'#fff' }}>Cortex<span style={{ color:'#10d988' }}>Cart</span></span>
           </Link>
-          <h1 className="font-display font-800 text-3xl text-white mb-2">Forgot password?</h1>
-          <p className="text-cx-muted text-[14px]">No worries — we'll email you a reset link</p>
+          <h1 style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:6 }}>Forgot Password?</h1>
+          <p style={{ fontSize:13, color:'#6b7fa3' }}>Enter your email and we'll send you a reset link</p>
         </div>
-
-        <div className="auth-card p-8">
-          <AnimatePresence mode="wait">
-            {sent ? (
-              <motion.div key="sent" initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }}
-                className="text-center py-4">
-                <div className="w-16 h-16 rounded-2xl bg-cx-emerald/15 border border-cx-emerald/25 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 size={32} className="text-cx-emerald"/>
+        <div style={card}>
+          {sent ? (
+            <div style={{ textAlign:'center' }}>
+              <div style={{ width:60, height:60, borderRadius:16, background:'rgba(16,217,136,0.1)', border:'1px solid rgba(16,217,136,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
+                <CheckCircle2 size={28} color="#10d988"/>
+              </div>
+              <h2 style={{ color:'#fff', fontSize:18, fontWeight:800, marginBottom:8 }}>Check your inbox</h2>
+              <p style={{ color:'#6b7fa3', fontSize:13, lineHeight:1.7, marginBottom:20 }}>
+                We sent a password reset link to <strong style={{ color:'#fff' }}>{email}</strong>. 
+                Valid for 1 hour.
+              </p>
+              <Link href="/auth/login" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'linear-gradient(135deg,#10d988,#0a9e62)', color:'#080b14', fontWeight:800, fontSize:13, padding:'12px 20px', borderRadius:12, textDecoration:'none' }}>
+                ← Back to Sign In
+              </Link>
+            </div>
+          ) : (
+            <div>
+              {error && (
+                <div style={{ background:'rgba(244,63,110,0.1)', border:'1px solid rgba(244,63,110,0.25)', borderRadius:10, padding:'10px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+                  <AlertCircle size={14} color="#f43f6e"/>
+                  <span style={{ fontSize:13, color:'#f43f6e' }}>{error}</span>
                 </div>
-                <h2 className="font-800 text-[20px] text-white mb-2">Check your inbox ✉️</h2>
-                <p className="text-cx-muted text-[13px] leading-relaxed mb-1">
-                  If <strong className="text-cx-text">{email}</strong> is registered, a reset link has been sent.
-                </p>
-                <p className="text-cx-muted text-[12px] mb-6">
-                  The link expires in <strong className="text-cx-text">1 hour</strong>. Check your spam folder if you don't see it.
-                </p>
-                <div className="space-y-3">
-                  <button onClick={() => { setSent(false); setEmail('') }}
-                    className="btn-outline-em w-full py-3 text-[13px] rounded-xl">
-                    Try a different email
-                  </button>
-                  <Link href="/auth/login"
-                    className="flex items-center justify-center gap-2 text-[13px] text-cx-muted hover:text-cx-text transition-colors">
-                    <ArrowLeft size={13}/> Back to sign in
-                  </Link>
+              )}
+              <form onSubmit={handleSubmit}>
+                <label style={{ display:'block', fontSize:11, fontWeight:700, color:'#4a5a7a', textTransform:'uppercase' as const, letterSpacing:'0.1em', marginBottom:8 }}>
+                  Email Address
+                </label>
+                <div style={{ position:'relative', marginBottom:20 }}>
+                  <Mail size={14} color="#4a5a7a" style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)' }}/>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                    placeholder="you@example.com" style={inputStyle}/>
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div key="form" initial={{ opacity:0 }} animate={{ opacity:1 }}>
-                {error && (
-                  <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-cx-rose/10 border border-cx-rose/20 text-[13px] text-cx-rose">
-                    <AlertCircle size={14} className="flex-shrink-0"/> {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">
-                      Registered Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none"/>
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                        placeholder="you@example.com"
-                        className="cx-input w-full pl-10 pr-4 py-3 text-[13px]"/>
-                    </div>
-                    <p className="text-[11px] text-cx-muted mt-1.5">
-                      Enter the email address you signed up with
-                    </p>
-                  </div>
-
-                  <button type="submit" disabled={loading}
-                    className="btn-em w-full py-3.5 text-[14px] rounded-xl flex items-center justify-center gap-2 disabled:opacity-60">
-                    {loading
-                      ? <><Loader2 size={15} className="animate-spin"/> Sending link…</>
-                      : <><Send size={14}/> Send Reset Link</>}
-                  </button>
-                </form>
-
-                <Link href="/auth/login"
-                  className="flex items-center justify-center gap-2 text-[13px] text-cx-muted hover:text-cx-text transition-colors mt-5">
-                  <ArrowLeft size={13}/> Back to sign in
-                </Link>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <button type="submit" disabled={loading || !email.trim()}
+                  style={{ width:'100%', background:'linear-gradient(135deg,#10d988,#0a9e62)', color:'#080b14', fontWeight:800, fontSize:14, padding:'13px', borderRadius:12, border:'none', cursor:(loading||!email.trim())?'not-allowed':'pointer', opacity:(loading||!email.trim())?0.5:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                  {loading ? <><Loader2 size={15} style={{ animation:'spin 1s linear infinite' }}/> Sending…</> : <><Send size={15}/> Send Reset Link</>}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
-
-        {/* Help note */}
-        <p className="text-center text-[12px] text-cx-muted mt-4">
-          Remember your password?{' '}
-          <Link href="/auth/login" className="text-cx-emerald hover:underline font-600">Sign in</Link>
-          {' '}·{' '}
-          <Link href="/auth/register" className="text-cx-emerald hover:underline font-600">Create account</Link>
+        <p style={{ textAlign:'center', fontSize:12, color:'#3a4a6a', marginTop:16 }}>
+          <Link href="/auth/login" style={{ color:'#10d988', textDecoration:'none' }}>← Back to sign in</Link>
         </p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

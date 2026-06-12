@@ -3,163 +3,226 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 const CATS = [
-  { name:'Tech',     slug:'tech',     description:'Gadgets, devices and electronics' },
-  { name:'Home',     slug:'home',     description:'Smart home and living essentials' },
-  { name:'Fashion',  slug:'fashion',  description:'Clothing, shoes and accessories' },
-  { name:'Beauty',   slug:'beauty',   description:'Skincare, haircare and wellness' },
-  { name:'Sports',   slug:'sports',   description:'Fitness gear and outdoor equipment' },
-  { name:'Food',     slug:'food',     description:'Kitchen tools and gourmet products' },
-  { name:'Gaming',   slug:'gaming',   description:'Gaming peripherals and accessories' },
-  { name:'Office',   slug:'office',   description:'Productivity tools and desk essentials' },
-  { name:'Music',    slug:'music',    description:'Instruments, audio gear and accessories' },
-  { name:'Travel',   slug:'travel',   description:'Luggage, accessories and travel gear' },
+  { name:'Tech',      slug:'tech',      description:'Gadgets, devices and electronics' },
+  { name:'Gaming',    slug:'gaming',    description:'Gaming peripherals and accessories' },
+  { name:'Home',      slug:'home',      description:'Smart home and living essentials' },
+  { name:'Fashion',   slug:'fashion',   description:'Clothing, shoes and accessories' },
+  { name:'Beauty',    slug:'beauty',    description:'Skincare, haircare and wellness' },
+  { name:'Sports',    slug:'sports',    description:'Fitness gear and outdoor equipment' },
+  { name:'Office',    slug:'office',    description:'Productivity tools and desk essentials' },
+  { name:'Music',     slug:'music',     description:'Instruments, audio and accessories' },
+  { name:'Travel',    slug:'travel',    description:'Luggage, accessories and travel gear' },
+  { name:'Books',     slug:'books',     description:'Books, courses and learning materials' },
+  { name:'Kitchen',   slug:'kitchen',   description:'Cooking tools and appliances' },
+  { name:'Pets',      slug:'pets',      description:'Pet care, toys and accessories' },
 ]
 
-const PRODUCTS = [
-  // ── TECH (15) ────────────────────────────────────────────────────────────
-  {n:'Ion 30K Titan Charger',       sku:'ION-30K-001',c:'tech',   p:129,cp:159,s:42,r:4.8,rc:312,f:true, d:true, desc:'Ultra-fast 140W GaN charger bank, dual USB-C PD, folds flat.',     img:'https://images.unsplash.com/photo-1609592424858-7de65a53f4f1?w=600',t:['charger','power-bank','gan']},
-  {n:'NovaPods X Ultra',            sku:'NOV-POD-002',c:'tech',   p:199,cp:249,s:18,r:4.9,rc:891,f:true, d:false,desc:'Hybrid ANC earbuds, 36h battery, IPX5 waterproof.',              img:'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600',t:['earbuds','anc','wireless']},
-  {n:'PixelWatch Pro S',             sku:'PIX-WCH-003',c:'tech',   p:349,cp:399,s:9, r:4.7,rc:204,f:true, d:true, desc:'AMOLED smartwatch, GPS, blood-oxygen, 7-day battery.',           img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['smartwatch','gps','fitness']},
-  {n:'StellarBuds Neo',              sku:'STL-BUD-004',c:'tech',   p:89, cp:119,s:55,r:4.5,rc:143,f:false,d:true, desc:'Open-ear spatial audio, 28h playtime, bone conduction.',         img:'https://images.unsplash.com/photo-1606220838315-056192d5e927?w=600',t:['earbuds','open-ear']},
-  {n:'ArcMouse Ergo Pro',            sku:'ARC-MSE-005',c:'tech',   p:79, cp:99, s:30,r:4.6,rc:88, f:false,d:false,desc:'Vertical ergonomic mouse, silent clicks, rechargeable.',         img:'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600',t:['mouse','ergonomic']},
-  {n:'ZenHub 12-Port Dock',          sku:'ZEN-DOC-006',c:'tech',   p:149,cp:179,s:22,r:4.7,rc:67, f:false,d:false,desc:'12-in-1 USB-C hub, 4K HDMI, 100W PD, Gigabit Ethernet.',       img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['dock','usb-c','hub']},
-  {n:'LunaKey RGB 75%',              sku:'LUN-KBD-007',c:'tech',   p:169,cp:199,s:14,r:4.8,rc:229,f:true, d:false,desc:'Hot-swap mechanical keyboard, per-key RGB, gasket mount.',      img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['keyboard','mechanical','rgb']},
-  {n:'ClearCam 4K Webcam',           sku:'CLR-CAM-008',c:'tech',   p:119,cp:149,s:37,r:4.5,rc:156,f:false,d:true, desc:'4K/60fps webcam, AI auto-framing, built-in ring light.',        img:'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600',t:['webcam','4k','streaming']},
-  {n:'FluxPad Drawing Tablet',       sku:'FLX-TAB-009',c:'tech',   p:139,cp:179,s:20,r:4.6,rc:112,f:false,d:true, desc:'10x6" active area, 8192 pressure levels, wireless stylus.',    img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['tablet','drawing','stylus']},
-  {n:'SonicBar 2.1 Soundbar',        sku:'SON-BAR-010',c:'tech',   p:189,cp:239,s:16,r:4.7,rc:198,f:true, d:true, desc:'2.1 soundbar with wireless subwoofer, Dolby Atmos, HDMI ARC.', img:'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600',t:['soundbar','dolby','speaker']},
-  {n:'NanoRouter WiFi 6E',           sku:'NAN-RTR-011',c:'tech',   p:219,cp:279,s:12,r:4.8,rc:87, f:false,d:false,desc:'WiFi 6E tri-band router, 6GHz, 10Gbps WAN, OFDMA.',            img:'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600',t:['router','wifi6','networking']},
-  {n:'PrismaLED Strip Kit',          sku:'PRI-LED-012',c:'tech',   p:49, cp:65, s:85,r:4.5,rc:341,f:false,d:false,desc:'5m RGBIC smart LED strip, music sync, app control.',            img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['led','smart-home','rgb']},
-  {n:'OmniCharge 20 Pro',            sku:'OMN-CHR-013',c:'tech',   p:159,cp:199,s:25,r:4.7,rc:143,f:false,d:true, desc:'20000mAh power bank, AC outlet, 100W PD, wireless charge.',   img:'https://images.unsplash.com/photo-1586495777744-4e6232bf2fb7?w=600',t:['power-bank','ac-outlet','wireless']},
-  {n:'VisionMate USB Monitor',       sku:'VIS-MON-014',c:'tech',   p:259,cp:319,s:10,r:4.6,rc:76, f:true, d:false,desc:'15.6" portable IPS, USB-C, HDR, 1920×1080, 500 nits.',        img:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',t:['monitor','portable','usb-c']},
-  {n:'SpeedDrive SSD 1TB',           sku:'SPD-SSD-015',c:'tech',   p:99, cp:129,s:50,r:4.9,rc:512,f:false,d:true, desc:'NVMe Gen4 SSD, 7400MB/s read, 1TB, M.2 2280.',               img:'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600',t:['ssd','storage','nvme']},
-  // ── HOME (10) ────────────────────────────────────────────────────────────
-  {n:'AuraLight Smart Lamp',         sku:'AUR-LMP-016',c:'home',   p:59, cp:79, s:60,r:4.6,rc:401,f:true, d:true, desc:'16M colors, voice + app control, 3000 lumen.',               img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['lamp','smart-home','lighting']},
-  {n:'BreezeQ Air Purifier',         sku:'BRZ-APR-017',c:'home',   p:229,cp:279,s:11,r:4.8,rc:117,f:true, d:false,desc:'HEPA H13 + UV-C, 800 sqft, whisper-quiet 25dB.',              img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['air-purifier','hepa','health']},
-  {n:'NestPad Wireless Charger',     sku:'NST-CHR-018',c:'home',   p:49, cp:65, s:80,r:4.5,rc:88, f:false,d:false,desc:'15W Qi2, charges phone + watch + earbuds simultaneously.',    img:'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600',t:['wireless-charger','qi2','desk']},
-  {n:'ChillZone Tower Fan',          sku:'CHL-FAN-019',c:'home',   p:45, cp:59, s:48,r:4.4,rc:63, f:false,d:true, desc:'6-speed tower fan, 180° oscillation, USB-C powered.',        img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['fan','cooling','desk']},
-  {n:'DriftFrame Digital Canvas',    sku:'DRF-FRM-020',c:'home',   p:179,cp:229,s:20,r:4.7,rc:89, f:true, d:false,desc:'10" digital art frame, cloud sync, motion sensor sleep.',     img:'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600',t:['digital-frame','art','wifi']},
-  {n:'ZenAir Diffuser Pro',          sku:'ZEN-DIF-021',c:'home',   p:69, cp:89, s:55,r:4.6,rc:234,f:false,d:false,desc:'Ultrasonic aromatherapy diffuser, 500ml, 12-color LED.',       img:'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=600',t:['diffuser','aromatherapy','wellness']},
-  {n:'HaloScale Smart Body Scale',   sku:'HAL-SCL-022',c:'home',   p:79, cp:99, s:40,r:4.5,rc:312,f:false,d:false,desc:'17-metric body scale, BMI, Bluetooth, syncs health apps.',    img:'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600',t:['scale','health','bluetooth']},
-  {n:'LumaRing Selfie Light',        sku:'LUM-RNG-023',c:'home',   p:35, cp:49, s:90,r:4.4,rc:521,f:false,d:true, desc:'10" ring light, 3 color modes, adjustable brightness, clip.', img:'https://images.unsplash.com/photo-1598899247449-76fd46c6c41a?w=600',t:['ring-light','selfie','photography']},
-  {n:'BrewBot Smart Coffee Maker',   sku:'BRW-COF-024',c:'home',   p:149,cp:199,s:18,r:4.8,rc:267,f:true, d:true, desc:'Programmable smart coffee maker, built-in grinder, app control.',img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600',t:['coffee','smart-home','brewing']},
-  {n:'StormSeal Draft Stopper Set',  sku:'STM-DFT-025',c:'home',   p:29, cp:39, s:120,r:4.3,rc:89,f:false,d:false,desc:'Under-door draft stopper set, 3 pack, energy saving.',        img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['home','energy-saving','insulation']},
-  // ── FASHION (12) ─────────────────────────────────────────────────────────
-  {n:'VoltCarry Sling Bag',          sku:'VLT-SLG-026',c:'fashion',p:89, cp:120,s:25,r:4.7,rc:192,f:true, d:false,desc:'Ballistic nylon, anti-theft pocket, USB-A passthrough.',      img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['bag','sling','anti-theft']},
-  {n:'AlphaShell Rain Jacket',       sku:'ALP-JKT-027',c:'fashion',p:179,cp:229,s:15,r:4.8,rc:241,f:true, d:true, desc:'3-layer Gore-Tex, pit-zips, removable hood, packable.',      img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600',t:['jacket','waterproof','gore-tex']},
-  {n:'FlowThread Joggers',           sku:'FLW-JGR-028',c:'fashion',p:65, cp:85, s:40,r:4.6,rc:377,f:false,d:false,desc:'4-way stretch, tapered fit, deep zip pockets.',               img:'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600',t:['joggers','activewear','stretch']},
-  {n:'UrbanRun Sneakers',            sku:'URB-SNK-029',c:'fashion',p:129,cp:159,s:22,r:4.7,rc:509,f:true, d:true, desc:'Responsive foam, recycled knit upper, reflective accents.',   img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600',t:['shoes','running','recycled']},
-  {n:'CityTote Canvas Bag',          sku:'CTY-TOT-030',c:'fashion',p:39, cp:55, s:70,r:4.4,rc:134,f:false,d:false,desc:'Heavy canvas, inner laptop sleeve 15", magnetic snap.',       img:'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=600',t:['tote','canvas','laptop']},
-  {n:'ApexCap UPF50 Hat',            sku:'APX-CAP-031',c:'fashion',p:34, cp:45, s:55,r:4.5,rc:88, f:false,d:false,desc:'Moisture-wicking, UPF 50+, one-size flex fit.',              img:'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600',t:['cap','upf50','sport']},
-  {n:'NovaFlex Compression Tee',     sku:'NOV-TEE-032',c:'fashion',p:45, cp:60, s:60,r:4.5,rc:203,f:false,d:false,desc:'4-way stretch compression top, moisture-wick, UV protection.',img:'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600',t:['tee','compression','activewear']},
-  {n:'PolarFleece Zip Hoodie',       sku:'POL-HDI-033',c:'fashion',p:89, cp:119,s:35,r:4.6,rc:156,f:false,d:true, desc:'Heavyweight 340gsm fleece, full-zip, kangaroo pocket.',      img:'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600',t:['hoodie','fleece','winter']},
-  {n:'DriftBand Watch Strap',        sku:'DRF-STR-034',c:'fashion',p:29, cp:45, s:100,r:4.4,rc:67,f:false,d:false,desc:'Premium silicone band, fits Apple Watch & Samsung 22mm.',    img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['watch-band','silicone','accessory']},
-  {n:'ThermalTech Insulated Vest',   sku:'THM-VST-035',c:'fashion',p:79, cp:109,s:28,r:4.6,rc:112,f:true, d:false,desc:'Lightweight puffer vest, 800-fill down, packable.',          img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600',t:['vest','down','lightweight']},
-  {n:'GridMesh Gym Shorts',          sku:'GRD-SHT-036',c:'fashion',p:35, cp:50, s:75,r:4.5,rc:289,f:false,d:false,desc:'7" inseam, mesh lining, zip pocket, anti-odor fabric.',      img:'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600',t:['shorts','gym','mesh']},
-  {n:'StormWalk Hiking Boots',       sku:'STM-BOT-037',c:'fashion',p:159,cp:199,s:18,r:4.7,rc:178,f:true, d:true, desc:'Waterproof leather + mesh, Vibram sole, ankle support.',     img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600',t:['boots','hiking','waterproof']},
-  // ── BEAUTY (8) ───────────────────────────────────────────────────────────
-  {n:'GlowKit Vitamin C Serum',      sku:'GLW-SRM-038',c:'beauty', p:79, cp:99, s:33,r:4.8,rc:622,f:true, d:true, desc:'20% Vit-C + Niacinamide, 30ml, clinical-grade brightening.', img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['serum','vitamin-c','skincare']},
-  {n:'ZenLift Rose Quartz Roller',   sku:'ZEN-RLR-039',c:'beauty', p:29, cp:40, s:90,r:4.4,rc:281,f:false,d:false,desc:'Dual rose quartz, stainless handle, improves circulation.',   img:'https://images.unsplash.com/photo-1619451050621-83cb7aada2d7?w=600',t:['face-roller','rose-quartz','skincare']},
-  {n:'PureRinse AHA Scalp Scrub',    sku:'PUR-SCR-040',c:'beauty', p:22, cp:30, s:120,r:4.5,rc:183,f:false,d:false,desc:'AHA + coffee blend, balances scalp pH, 250ml.',             img:'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600',t:['haircare','scalp','exfoliant']},
-  {n:'LuxeBalm SPF50 Lip Stick',     sku:'LUX-LIP-041',c:'beauty', p:18, cp:25, s:200,r:4.6,rc:97, f:false,d:true, desc:'Tinted mineral SPF 50, 8hr wear, reef-safe formula.',       img:'https://images.unsplash.com/photo-1631730486572-226d1f595058?w=600',t:['lip','spf','mineral']},
-  {n:'DermaPro Microneedling Pen',   sku:'DRM-PEN-042',c:'beauty', p:89, cp:129,s:25,r:4.5,rc:134,f:false,d:true, desc:'0.25-2.5mm titanium tips, 6-speed, stimulates collagen.',    img:'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600',t:['skincare','collagen','microneedling']},
-  {n:'AquaGlow Hyaluronic Cream',    sku:'AQU-CRM-043',c:'beauty', p:45, cp:59, s:65,r:4.7,rc:312,f:false,d:false,desc:'Multi-weight HA, ceramides, 72hr hydration, all skin types.',img:'https://images.unsplash.com/photo-1556228720-da5eda9ccb00?w=600',t:['moisturizer','hyaluronic','hydrating']},
-  {n:'VelvetMatte Lip Liner Set',    sku:'VLV-LNR-044',c:'beauty', p:32, cp:45, s:150,r:4.5,rc:89, f:false,d:false,desc:'12-shade velvet matte liner set, long-wear, smudge-proof.', img:'https://images.unsplash.com/photo-1631730486572-226d1f595058?w=600',t:['lips','liner','matte']},
-  {n:'NaturalGlo Bronzer Palette',   sku:'NAT-BRZ-045',c:'beauty', p:55, cp:75, s:45,r:4.6,rc:178,f:true, d:false,desc:'6-shade bronzer, highlight & contour, buildable coverage.',  img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['bronzer','contour','makeup']},
-  // ── SPORTS (10) ──────────────────────────────────────────────────────────
-  {n:'CoreForce Resistance Set',     sku:'COR-RES-046',c:'sports', p:49, cp:65, s:60,r:4.7,rc:548,f:true, d:false,desc:'5-band set 10-50 lb, fabric-coated, carry bag.',              img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['resistance-bands','gym','workout']},
-  {n:'HydroFuel 40oz Bottle',        sku:'HYD-BTL-047',c:'sports', p:35, cp:45, s:110,r:4.8,rc:904,f:false,d:false,desc:'Triple-wall vacuum, 24h cold, leak-proof straw lid.',       img:'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600',t:['water-bottle','insulated','gym']},
-  {n:'ZenYoga Non-Slip Mat',         sku:'ZEN-MAT-048',c:'sports', p:55, cp:70, s:40,r:4.7,rc:326,f:true, d:false,desc:'6mm TPE foam, alignment lines, microfibre top, eco-cert.',   img:'https://images.unsplash.com/photo-1601925228133-9d9eddb97a75?w=600',t:['yoga','mat','eco']},
-  {n:'CycleTrack GPS Computer',      sku:'CYC-GPS-049',c:'sports', p:219,cp:269,s:12,r:4.8,rc:78, f:true, d:true, desc:'ANT+/BLE, color map display, climb segments, 20h battery.', img:'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=600',t:['cycling','gps','navigation']},
-  {n:'GripPro Lifting Gloves',       sku:'GRP-GLV-050',c:'sports', p:24, cp:35, s:95,r:4.4,rc:212,f:false,d:true, desc:'Full-palm padding, wrist support, breathable mesh.',         img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600',t:['gloves','lifting','gym']},
-  {n:'PulseX Heart Rate Monitor',    sku:'PLS-HRM-051',c:'sports', p:79, cp:99, s:35,r:4.6,rc:167,f:false,d:false,desc:'Chest strap HRM, ANT+/BLE dual, 99.7% EKG accuracy.',       img:'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600',t:['heart-rate','monitor','cycling']},
-  {n:'StrideX Pro Running Belt',     sku:'STR-BLT-052',c:'sports', p:28, cp:38, s:75,r:4.5,rc:167,f:false,d:false,desc:'Bounce-free waist belt, fits iPhone 15 Plus, reflective.',   img:'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600',t:['running','belt','sport']},
-  {n:'TitanBell Adjustable Dumbbell',sku:'TTN-DBL-053',c:'sports', p:299,cp:399,s:8, r:4.9,rc:312,f:true, d:true, desc:'5-52.5 lb adjustable dumbbell, replaces 15 weights.',        img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['dumbbell','adjustable','strength']},
-  {n:'AeroJump Pro Jump Rope',       sku:'AER-JMP-054',c:'sports', p:39, cp:55, s:80,r:4.6,rc:234,f:false,d:false,desc:'Ball-bearing handles, digital counter, 3m steel cable.',     img:'https://images.unsplash.com/photo-1601926638399-e9b8e0649de5?w=600',t:['jump-rope','cardio','crossfit']},
-  {n:'FrostRoll Cryo Massage Roller',sku:'FRS-RLL-055',c:'sports', p:59, cp:79, s:45,r:4.5,rc:189,f:false,d:false,desc:'Stainless cryo-roller, stays cold 6hrs, 3 texture zones.',   img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600',t:['massage','recovery','cryo']},
-  // ── FOOD (8) ─────────────────────────────────────────────────────────────
-  {n:'BrewMaster Pour Kit',          sku:'BRW-KIT-056',c:'food',   p:75, cp:95, s:28,r:4.9,rc:441,f:true, d:false,desc:'Gooseneck kettle + scale + V60 dripper, gift-boxed.',         img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600',t:['coffee','pour-over','gift']},
-  {n:'SpiceVault 20-Jar Set',        sku:'SPC-JRS-057',c:'food',   p:59, cp:79, s:45,r:4.7,rc:186,f:false,d:false,desc:'Magnetic glass jars, label stickers, minimalist rack.',       img:'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600',t:['spice','kitchen','storage']},
-  {n:'ColdPress Pro Juicer',         sku:'CLD-JCR-058',c:'food',   p:189,cp:239,s:9, r:4.7,rc:93, f:true, d:true, desc:'80 RPM masticating juicer, 1.5L batch, 10yr warranty.',      img:'https://images.unsplash.com/photo-1622597467836-f3285f2131b8?w=600',t:['juicer','cold-press','health']},
-  {n:'GrainKing Rice Cooker',        sku:'GRN-RCK-059',c:'food',   p:99, cp:129,s:20,r:4.6,rc:254,f:false,d:false,desc:'Fuzzy-logic, 10-cup, rice/quinoa/slow-cook modes.',           img:'https://images.unsplash.com/photo-1585671542778-80a4592a8262?w=600',t:['rice-cooker','kitchen','multi-cook']},
-  {n:'BladeZen Chef Knife 8"',       sku:'BLD-KNF-060',c:'food',   p:119,cp:159,s:30,r:4.8,rc:342,f:true, d:false,desc:'VG-10 Damascus steel, G10 handle, 62 HRC hardness.',        img:'https://images.unsplash.com/photo-1543353071-10c8ba85a904?w=600',t:['knife','chef','damascus']},
-  {n:'FermentPro Crock Set',         sku:'FRM-CRK-061',c:'food',   p:85, cp:109,s:22,r:4.7,rc:89, f:false,d:false,desc:'2L ceramic fermentation crock, airlock lid, weights.',       img:'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600',t:['fermentation','crock','kitchen']},
-  {n:'NutriBlend Pro 900W',          sku:'NTR-BLD-062',c:'food',   p:149,cp:199,s:18,r:4.7,rc:421,f:true, d:true, desc:'900W blender, 6 stainless blades, self-clean, 64oz jar.',    img:'https://images.unsplash.com/photo-1622597467836-f3285f2131b8?w=600',t:['blender','smoothie','kitchen']},
-  {n:'WokMaster Carbon Steel Wok',   sku:'WOK-PAN-063',c:'food',   p:79, cp:99, s:35,r:4.8,rc:234,f:false,d:false,desc:'14" hand-hammered carbon steel wok, wooden handle, lid.',    img:'https://images.unsplash.com/photo-1585671542778-80a4592a8262?w=600',t:['wok','carbon-steel','cooking']},
-  // ── GAMING (10) ──────────────────────────────────────────────────────────
-  {n:'VortexPad Ultra Controller',   sku:'VRT-CTL-064',c:'gaming', p:79, cp:99, s:33,r:4.8,rc:712,f:true, d:true, desc:'Hall-effect sticks, per-button RGB, 40h wireless.',         img:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=600',t:['controller','gaming','wireless']},
-  {n:'EchoRGB XL Mouse Pad',         sku:'ECH-MPD-065',c:'gaming', p:39, cp:55, s:60,r:4.7,rc:388,f:false,d:false,desc:'900×400mm, stitched edge, ARGB strip, non-slip base.',       img:'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600',t:['mousepad','rgb','xl']},
-  {n:'QuantumHeadset 7.1',           sku:'QNT-HST-066',c:'gaming', p:139,cp:179,s:18,r:4.6,rc:265,f:true, d:false,desc:'Virtual 7.1, 50mm drivers, noise-cancel boom mic.',         img:'https://images.unsplash.com/photo-1583394293214-0e4f0ccdcd5b?w=600',t:['headset','surround','gaming']},
-  {n:'NeonClick Gaming Mouse',       sku:'NEN-MSE-067',c:'gaming', p:59, cp:79, s:45,r:4.7,rc:433,f:false,d:true, desc:'26K DPI, 95g, 8 programmable buttons, 70hr battery.',       img:'https://images.unsplash.com/photo-1527814050087-3793815479db?w=600',t:['mouse','gaming','lightweight']},
-  {n:'StreamDeck Mini Pro',          sku:'STR-DCK-068',c:'gaming', p:109,cp:139,s:20,r:4.8,rc:178,f:true, d:false,desc:'15 LCD keys, plugin ecosystem, macro automation.',           img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['stream-deck','macro','streaming']},
-  {n:'ChairBack Lumbar Support',     sku:'CHR-LMB-069',c:'gaming', p:45, cp:60, s:70,r:4.5,rc:215,f:false,d:false,desc:'Memory foam lumbar cushion, adjustable strap, 3D contour.', img:'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=600',t:['lumbar','ergonomic','chair']},
-  {n:'ProGrip Controller Stand',     sku:'PRO-STD-070',c:'gaming', p:29, cp:39, s:100,r:4.4,rc:134,f:false,d:false,desc:'Dual controller charging stand, USB-C, LED indicator.',    img:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=600',t:['controller','stand','charging']},
-  {n:'CaptureX 4K Capture Card',     sku:'CAP-CRD-071',c:'gaming', p:149,cp:199,s:15,r:4.7,rc:89, f:false,d:true, desc:'4K30 / 1080p60 capture, HDMI passthrough, zero-lag.',       img:'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600',t:['capture-card','streaming','4k']},
-  {n:'RapidFire Mechanical Numpad',  sku:'RPD-NPD-072',c:'gaming', p:49, cp:65, s:40,r:4.5,rc:112,f:false,d:false,desc:'21-key hot-swap numpad, RGB, Gateron switches.',             img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['numpad','mechanical','rgb']},
-  {n:'MegaLift Monitor Arm',         sku:'MGA-ARM-073',c:'gaming', p:89, cp:119,s:25,r:4.7,rc:201,f:false,d:false,desc:'Full-motion arm, fits 17-32" monitors, VESA 75/100.',       img:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',t:['monitor-arm','vesa','ergonomic']},
-  // ── OFFICE (8) ───────────────────────────────────────────────────────────
-  {n:'VertDesk Standing Desk',       sku:'VRT-DSK-074',c:'office', p:499,cp:649,s:5, r:4.8,rc:134,f:true, d:true, desc:'Electric sit-stand desk, 3-stage lift, memory presets.',     img:'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=600',t:['standing-desk','ergonomic','office']},
-  {n:'FlowDesk Organizer Set',       sku:'FLW-ORG-075',c:'office', p:69, cp:89, s:55,r:4.6,rc:178,f:false,d:false,desc:'6-piece bamboo desk organizer, wireless charger tray.',      img:'https://images.unsplash.com/photo-1587033411391-5d9e51cce126?w=600',t:['organizer','bamboo','desk']},
-  {n:'LumaPad LED Desk Mat',         sku:'LUM-MAT-076',c:'office', p:59, cp:79, s:45,r:4.5,rc:234,f:false,d:false,desc:'900×400mm leather desk mat, ARGB edges, wireless charge.',   img:'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600',t:['desk-mat','led','wireless']},
-  {n:'ArcArm Laptop Stand',          sku:'ARC-LST-077',c:'office', p:79, cp:99, s:40,r:4.7,rc:312,f:false,d:true, desc:'Adjustable aluminum laptop stand, 6 height levels, foldable.',img:'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=600',t:['laptop-stand','aluminum','ergonomic']},
-  {n:'InkFlow Gel Pen Set',          sku:'INK-PEN-078',c:'office', p:19, cp:25, s:200,r:4.4,rc:89, f:false,d:false,desc:'12-pack 0.5mm smooth gel pens, archival ink, gift box.',    img:'https://images.unsplash.com/photo-1587033411391-5d9e51cce126?w=600',t:['pen','gel','stationery']},
-  {n:'NoisePod Office Soundproof',   sku:'NIS-POD-079',c:'office', p:39, cp:55, s:60,r:4.3,rc:67, f:false,d:false,desc:'Foldable acoustic panel, 50dB NRC, easy wall mount.',        img:'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=600',t:['acoustic','soundproof','office']},
-  {n:'BreakTimer Smart Desk Clock',  sku:'BRK-CLK-080',c:'office', p:49, cp:65, s:35,r:4.5,rc:112,f:false,d:false,desc:'Pomodoro desk clock, e-ink display, silent, USB-C charged.', img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['clock','pomodoro','productivity']},
-  {n:'CableKeep Magnetic Manager',   sku:'CBL-MGR-081',c:'office', p:25, cp:35, s:150,r:4.5,rc:156,f:false,d:false,desc:'10-hook magnetic cable manager, sticks to any surface.',    img:'https://images.unsplash.com/photo-1587033411391-5d9e51cce126?w=600',t:['cable-management','magnetic','desk']},
-  // ── MUSIC (7) ────────────────────────────────────────────────────────────
-  {n:'SoundLab USB Audio Interface',  sku:'SND-INT-082',c:'music',  p:149,cp:199,s:18,r:4.8,rc:234,f:true, d:false,desc:'2-in/2-out, 24-bit/192kHz, ultra-low latency, bus-powered.',img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['audio-interface','recording','usb']},
-  {n:'CondensoPro XLR Microphone',   sku:'CON-MIC-083',c:'music',  p:199,cp:259,s:12,r:4.9,rc:312,f:true, d:true, desc:'Large-diaphragm condenser, cardioid + omni, shockmount.',    img:'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600',t:['microphone','condenser','xlr']},
-  {n:'BeatPad MK2 MIDI Controller',  sku:'BPD-MDI-084',c:'music',  p:129,cp:169,s:15,r:4.7,rc:178,f:false,d:false,desc:'16 velocity-sensitive pads, 8 knobs, USB-MIDI, USB-C.',      img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['midi','pads','music-production']},
-  {n:'SilkStrings Capo & Pick Set',  sku:'SLK-CAP-085',c:'music',  p:19, cp:28, s:200,r:4.6,rc:89, f:false,d:false,desc:'Aircraft aluminum capo + 12 premium picks, travel case.',  img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600',t:['guitar','capo','picks']},
-  {n:'AuraCans Studio Headphones',   sku:'AUR-HPH-086',c:'music',  p:249,cp:319,s:10,r:4.8,rc:267,f:true, d:false,desc:'Closed-back, 40mm beryllium drivers, 5Hz-35kHz, foldable.', img:'https://images.unsplash.com/photo-1583394293214-0e4f0ccdcd5b?w=600',t:['headphones','studio','audiophile']},
-  {n:'StringMaster Tuner Clip',      sku:'STR-TUN-087',c:'music',  p:24, cp:35, s:150,r:4.7,rc:134,f:false,d:false,desc:'Chromatic clip tuner, 440Hz ref, 0.02 cent accuracy.',      img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600',t:['tuner','guitar','chromatic']},
-  {n:'PolyPad 9" Practice Drum Pad', sku:'PLY-PAD-088',c:'music',  p:69, cp:89, s:30,r:4.6,rc:89, f:false,d:false,desc:'Double-sided natural rubber, 9", low-rebound, silent.',      img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['drums','practice-pad','silent']},
-  // ── TRAVEL (7) ───────────────────────────────────────────────────────────
-  {n:'NomadPack 40L Travel Pack',    sku:'NMD-PCK-089',c:'travel', p:189,cp:249,s:15,r:4.8,rc:267,f:true, d:true, desc:'40L carry-on backpack, TSA-friendly, laptop sleeve, hidden.',img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['backpack','carry-on','travel']},
-  {n:'PixelCard Ultra Slim Wallet',  sku:'PIX-WLT-090',c:'travel', p:49, cp:65, s:80,r:4.7,rc:512,f:false,d:false,desc:'RFID-blocking, carbon fiber, holds 8 cards, cash strap.',    img:'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600',t:['wallet','rfid','slim']},
-  {n:'SleepMask Pro Travel Set',     sku:'SLP-MSK-091',c:'travel', p:35, cp:49, s:100,r:4.6,rc:234,f:false,d:false,desc:'Contoured memory foam mask + earplugs + carry pouch.',      img:'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=600',t:['sleep-mask','travel','wellness']},
-  {n:'PackCube Compression Set 4pc', sku:'PCK-CBE-092',c:'travel', p:49, cp:65, s:70,r:4.8,rc:389,f:false,d:false,desc:'4-piece packing cubes, water-resistant, compression zip.',   img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['packing-cubes','luggage','travel']},
-  {n:'UniversalPlug Adapter Pro',    sku:'UNV-PLG-093',c:'travel', p:39, cp:55, s:90,r:4.7,rc:312,f:false,d:false,desc:'220-country plug adapter, 3 USB-A + 1 USB-C, 2 AC sockets.',img:'https://images.unsplash.com/photo-1609592424858-7de65a53f4f1?w=600',t:['adapter','travel','international']},
-  {n:'PocketScale Digital Luggage',  sku:'PCK-SCL-094',c:'travel', p:25, cp:35, s:120,r:4.5,rc:178,f:false,d:false,desc:'110lb/50kg digital luggage scale, tare, backlit, portable.', img:'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600',t:['luggage-scale','portable','travel']},
-  {n:'AquaFilter Travel Bottle',     sku:'AQU-BTL-095',c:'travel', p:45, cp:59, s:65,r:4.7,rc:223,f:false,d:true, desc:'Water filter bottle, removes 99.99% bacteria, 650ml.',      img:'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600',t:['water-filter','bottle','travel']},
-  // ── EXTRA TECH + GAMING (5 more to reach 100) ────────────────────────────
-  {n:'HoloLens Smart AR Glasses',    sku:'HOL-GLS-096',c:'tech',   p:299,cp:399,s:5, r:4.6,rc:45, f:true, d:true, desc:'AR smart glasses, 1080p camera, gesture control, 6hr.',      img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['ar-glasses','smart','wearable']},
-  {n:'FusionHub Smart Power Strip',  sku:'FUS-PST-097',c:'tech',   p:79, cp:99, s:45,r:4.7,rc:234,f:false,d:false,desc:'8-outlet smart strip, voice control, surge protection, USB.', img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['power-strip','smart-home','surge']},
-  {n:'SkyDrone Mini 4K',             sku:'SKY-DRN-098',c:'tech',   p:249,cp:329,s:8, r:4.7,rc:112,f:true, d:true, desc:'Foldable drone, 4K/60fps, 3-axis gimbal, 38min flight.',     img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['drone','4k','photography']},
-  {n:'ClickBot Mechanical Macropad', sku:'CLK-MPD-099',c:'gaming', p:59, cp:79, s:35,r:4.6,rc:89, f:false,d:false,desc:'6-key customizable macropad, hot-swap, RGB, rotary encoder.',img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['macropad','mechanical','rgb']},
-  {n:'ZeroG Float Arm Pro',          sku:'ZRG-ARM-100',c:'office', p:129,cp:169,s:20,r:4.8,rc:156,f:true, d:false,desc:'Zero-gravity monitor arm, 6-15kg load, 360° swivel.',        img:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',t:['monitor-arm','ergonomic','zero-gravity']},
+// Helpers
+const sl = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
+
+type P = { n:string; sku:string; c:string; p:number; cp:number; s:number; r:number; rc:number; f:boolean; d:boolean; desc:string; img:string; t:string[] }
+
+const PRODUCTS: P[] = [
+  // ── TECH (18) ────────────────────────────────────────────────────
+  {n:'Ion 30K Titan Charger',sku:'ION-30K-001',c:'tech',p:129,cp:159,s:42,r:4.8,rc:3120,f:true,d:true,desc:'Ultra-fast 140W GaN charger bank, dual USB-C PD, folds flat.',img:'https://images.unsplash.com/photo-1609592424858-7de65a53f4f1?w=600',t:['charger','gan','power']},
+  {n:'NovaPods X Ultra',sku:'NOV-POD-002',c:'tech',p:199,cp:249,s:18,r:4.9,rc:8910,f:true,d:false,desc:'Hybrid ANC earbuds, 36h battery, IPX5 waterproof.',img:'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600',t:['earbuds','anc','wireless']},
+  {n:'PixelWatch Pro S',sku:'PIX-WCH-003',c:'tech',p:349,cp:399,s:9,r:4.7,rc:2040,f:true,d:true,desc:'AMOLED smartwatch, GPS, blood-oxygen, 7-day battery.',img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['smartwatch','gps','health']},
+  {n:'ArcMouse Ergo Pro',sku:'ARC-MSE-005',c:'tech',p:79,cp:99,s:30,r:4.6,rc:880,f:false,d:false,desc:'Vertical ergonomic mouse, silent clicks, rechargeable.',img:'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600',t:['mouse','ergonomic','wireless']},
+  {n:'LunaKey RGB 75%',sku:'LUN-KBD-007',c:'tech',p:169,cp:199,s:14,r:4.8,rc:2290,f:true,d:false,desc:'Hot-swap mechanical keyboard, per-key RGB, gasket mount.',img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['keyboard','mechanical','rgb']},
+  {n:'ClearCam 4K Webcam',sku:'CLR-CAM-008',c:'tech',p:119,cp:149,s:37,r:4.5,rc:1560,f:false,d:true,desc:'4K/60fps webcam, AI auto-framing, built-in ring light.',img:'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600',t:['webcam','4k','streaming']},
+  {n:'SonicBar 2.1 Pro',sku:'SON-BAR-010',c:'tech',p:189,cp:239,s:16,r:4.7,rc:1980,f:true,d:true,desc:'2.1 soundbar with wireless subwoofer, Dolby Atmos, HDMI ARC.',img:'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600',t:['soundbar','dolby','audio']},
+  {n:'SpeedDrive SSD 2TB',sku:'SPD-SSD-015',c:'tech',p:149,cp:189,s:50,r:4.9,rc:5120,f:false,d:true,desc:'NVMe Gen4 SSD, 7400MB/s read, 2TB, M.2 2280.',img:'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600',t:['ssd','storage','nvme']},
+  {n:'NanoRouter WiFi 7',sku:'NAN-RTR-011',c:'tech',p:279,cp:349,s:12,r:4.8,rc:870,f:false,d:false,desc:'WiFi 7 tri-band router, 6GHz, 10Gbps WAN, mesh-ready.',img:'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600',t:['router','wifi7','networking']},
+  {n:'ZenHub 12-Port Dock',sku:'ZEN-DOC-006',c:'tech',p:149,cp:179,s:22,r:4.7,rc:670,f:false,d:false,desc:'12-in-1 USB-C hub, 4K HDMI, 100W PD, Gigabit Ethernet.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['hub','usb-c','dock']},
+  {n:'VisionMate USB Monitor',sku:'VIS-MON-014',c:'tech',p:259,cp:319,s:10,r:4.6,rc:760,f:true,d:false,desc:'15.6" portable IPS, USB-C, HDR, 1920×1080, 500 nits.',img:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',t:['monitor','portable','display']},
+  {n:'PrismaLED Strip Kit',sku:'PRI-LED-012',c:'tech',p:49,cp:65,s:85,r:4.5,rc:3410,f:false,d:false,desc:'5m RGBIC smart LED strip, music sync, voice control.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['led','rgb','smart-home']},
+  {n:'StellarBuds Pro ANC',sku:'STL-BUD-016',c:'tech',p:149,cp:199,s:28,r:4.7,rc:4320,f:true,d:true,desc:'Active noise cancellation, 30h battery, spatial audio.',img:'https://images.unsplash.com/photo-1606220838315-056192d5e927?w=600',t:['earbuds','anc','spatial-audio']},
+  {n:'FluxPad Drawing Tablet',sku:'FLX-TAB-009',c:'tech',p:139,cp:179,s:20,r:4.6,rc:1120,f:false,d:true,desc:'10x6" active area, 8192 pressure levels, wireless stylus.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['tablet','drawing','stylus']},
+  {n:'OmniCharge 20 Pro',sku:'OMN-CHR-013',c:'tech',p:159,cp:199,s:25,r:4.7,rc:1430,f:false,d:true,desc:'20000mAh power bank, AC outlet, 100W PD, wireless charge.',img:'https://images.unsplash.com/photo-1586495777744-4e6232bf2fb7?w=600',t:['power-bank','ac','wireless']},
+  {n:'StreamDeck Pro 32',sku:'STR-DCK-017',c:'tech',p:229,cp:279,s:15,r:4.8,rc:1870,f:true,d:false,desc:'32-button LCD macro pad, customizable per app, USB-C.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['streamdeck','macropad','streaming']},
+  {n:'QuantumPen Stylus Elite',sku:'QNT-STY-018',c:'tech',p:89,cp:119,s:35,r:4.6,rc:920,f:false,d:false,desc:'4096 pressure level stylus, tilt detection, rechargeable.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['stylus','pen','tablet']},
+  {n:'HoloLight Smart Ring',sku:'HOL-RNG-019',c:'tech',p:199,cp:249,s:11,r:4.5,rc:430,f:true,d:true,desc:'Health tracking smart ring, HRV, sleep, SpO2, titanium.',img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['smart-ring','health','fitness']},
+
+  // ── GAMING (12) ───────────────────────────────────────────────────
+  {n:'RaidPad Pro XL',sku:'RAD-PAD-020',c:'gaming',p:45,cp:60,s:120,r:4.7,rc:5670,f:true,d:true,desc:'XXL gaming mousepad 900x400mm, RGB border, stitched edges.',img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600',t:['mousepad','gaming','rgb']},
+  {n:'VortexShot Gaming Mouse',sku:'VTX-MSE-021',c:'gaming',p:69,cp:89,s:45,r:4.8,rc:3240,f:true,d:false,desc:'26000 DPI optical sensor, 6 programmable buttons, 70h battery.',img:'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600',t:['mouse','gaming','wireless']},
+  {n:'ThunderSet 7.1 Headset',sku:'THN-HST-022',c:'gaming',p:119,cp:149,s:22,r:4.6,rc:2110,f:false,d:true,desc:'Surround sound gaming headset, 50mm drivers, noise-cancel mic.',img:'https://images.unsplash.com/photo-1599669454699-248893623440?w=600',t:['headset','gaming','surround']},
+  {n:'NexGen Controller Elite',sku:'NEX-CTL-023',c:'gaming',p:89,cp:119,s:30,r:4.7,rc:1890,f:false,d:false,desc:'Pro gaming controller, hall-effect sticks, trigger locks.',img:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=600',t:['controller','gaming','pro']},
+  {n:'SpectraBlue Keyboard TKL',sku:'SPT-KBD-024',c:'gaming',p:149,cp:189,s:18,r:4.9,rc:4560,f:true,d:true,desc:'TKL gaming keyboard, optical switches, 0.2ms response.',img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['keyboard','gaming','optical']},
+  {n:'MonitorX 27" 280Hz',sku:'MON-GTX-025',c:'gaming',p:449,cp:549,s:8,r:4.8,rc:1320,f:true,d:false,desc:'27" IPS 280Hz gaming monitor, 1ms GTG, HDR600, G-Sync.',img:'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',t:['monitor','gaming','hz']},
+  {n:'CoolMax Laptop Stand',sku:'COL-STD-026',c:'gaming',p:49,cp:69,s:75,r:4.5,rc:870,f:false,d:false,desc:'Aluminum laptop stand with dual fans, 6 height levels.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['stand','laptop','cooling']},
+  {n:'WristGuard Gaming Pad',sku:'WRS-GPD-027',c:'gaming',p:35,cp:45,s:90,r:4.4,rc:2300,f:false,d:false,desc:'Memory foam wrist rest, mouse + keyboard set, anti-slip.',img:'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600',t:['wrist-rest','gaming','ergonomic']},
+  {n:'PortHub Gaming Router',sku:'PRT-RTR-028',c:'gaming',p:199,cp:249,s:15,r:4.7,rc:980,f:false,d:true,desc:'Gaming Wi-Fi 6 router, geo-filter, QoS, 5GHz priority.',img:'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600',t:['router','gaming','wifi6']},
+  {n:'ChairPad Lumbar Support',sku:'CHR-LMB-029',c:'gaming',p:59,cp:79,s:60,r:4.6,rc:1540,f:false,d:false,desc:'Memory foam lumbar pillow, adjustable strap, gaming chair fit.',img:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=600',t:['lumbar','support','chair']},
+  {n:'CaptureCard 4K HDR',sku:'CAP-CRD-030',c:'gaming',p:179,cp:229,s:20,r:4.7,rc:760,f:true,d:false,desc:'4K HDR capture card, HDMI 2.1, USB-C 3.2, zero-lag passthrough.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['capture-card','streaming','hdmi']},
+  {n:'GlowLight RGB Desk Kit',sku:'GLW-DSK-031',c:'gaming',p:89,cp:119,s:40,r:4.6,rc:2180,f:false,d:true,desc:'Monitor LED backlight + desk strip, sync to game, app control.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['rgb','desk','gaming']},
+
+  // ── HOME (12) ─────────────────────────────────────────────────────
+  {n:'AuraLight Smart Lamp',sku:'AUR-LMP-032',c:'home',p:59,cp:79,s:60,r:4.6,rc:4010,f:true,d:true,desc:'16M colors, voice + app control, 3000 lumen LED.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['lamp','smart','rgb']},
+  {n:'BreezeQ Air Purifier 800',sku:'BRZ-APR-033',c:'home',p:229,cp:279,s:11,r:4.8,rc:1170,f:true,d:false,desc:'HEPA H13 + UV-C, 800sqft coverage, whisper-quiet 25dB.',img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['air-purifier','hepa','uv']},
+  {n:'BrewBot Smart Coffee Maker',sku:'BRW-COF-034',c:'home',p:149,cp:199,s:18,r:4.8,rc:2670,f:true,d:true,desc:'Programmable smart coffee maker, built-in grinder, app control.',img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600',t:['coffee','smart','brewing']},
+  {n:'DriftFrame Digital Canvas',sku:'DRF-FRM-035',c:'home',p:179,cp:229,s:20,r:4.7,rc:890,f:true,d:false,desc:'10" digital art frame, cloud sync, 32GB, motion-sensor sleep.',img:'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600',t:['digital-frame','art','display']},
+  {n:'ZenAir Diffuser Pro 500',sku:'ZEN-DIF-036',c:'home',p:69,cp:89,s:55,r:4.6,rc:2340,f:false,d:false,desc:'Ultrasonic aromatherapy diffuser, 500ml, 12-color LED, 20h.',img:'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=600',t:['diffuser','aromatherapy','led']},
+  {n:'HaloScale Smart Body',sku:'HAL-SCL-037',c:'home',p:79,cp:99,s:40,r:4.5,rc:3120,f:false,d:false,desc:'17-metric body composition scale, BMI, Bluetooth, app sync.',img:'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=600',t:['scale','health','bluetooth']},
+  {n:'RoboVac X8 Hybrid',sku:'ROB-VAC-038',c:'home',p:299,cp:379,s:12,r:4.7,rc:2890,f:true,d:true,desc:'LiDAR robot vacuum + mop, 6000Pa suction, auto-empty base.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['robot-vacuum','lidar','mop']},
+  {n:'SmartPlug Energy Monitor',sku:'SMT-PLG-039',c:'home',p:29,cp:39,s:150,r:4.5,rc:4560,f:false,d:false,desc:'WiFi smart plug, real-time energy monitoring, scheduler.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['smart-plug','energy','wifi']},
+  {n:'AquaFilter Pro 7-Stage',sku:'AQU-FLT-040',c:'home',p:189,cp:249,s:22,r:4.8,rc:1560,f:false,d:false,desc:'7-stage under-sink water filter, RO system, 0.0001μm.',img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['water-filter','ro','purification']},
+  {n:'DeskRiser Pro Standing',sku:'DSK-RSR-041',c:'home',p:249,cp:319,s:15,r:4.7,rc:1230,f:false,d:true,desc:'Electric sit-stand desk converter, memory presets, USB ports.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['standing-desk','ergonomic','electric']},
+  {n:'NestCam Indoor 4K',sku:'NST-CAM-042',c:'home',p:99,cp:129,s:35,r:4.6,rc:3410,f:false,d:false,desc:'4K security cam, night vision, face recognition, 30-day cloud.',img:'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600',t:['camera','security','smart-home']},
+  {n:'BedSide Sunrise Alarm',sku:'BDS-ALM-043',c:'home',p:89,cp:119,s:45,r:4.7,rc:2180,f:true,d:false,desc:'Sunrise wake-up light, gradual 30-min sunrise, sleep sounds.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['alarm','sleep','light-therapy']},
+
+  // ── FASHION (12) ──────────────────────────────────────────────────
+  {n:'VoltCarry Sling Bag',sku:'VLT-SLG-044',c:'fashion',p:89,cp:120,s:25,r:4.7,rc:1920,f:true,d:false,desc:'Ballistic nylon, anti-theft zipper, USB-A passthrough.',img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['bag','sling','anti-theft']},
+  {n:'AlphaShell Rain Jacket',sku:'ALP-JKT-045',c:'fashion',p:179,cp:229,s:15,r:4.8,rc:2410,f:true,d:true,desc:'3-layer Gore-Tex, pit-zips, removable hood, packable.',img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600',t:['jacket','waterproof','gore-tex']},
+  {n:'UrbanRun Sneakers Pro',sku:'URB-SNK-046',c:'fashion',p:129,cp:159,s:22,r:4.7,rc:5090,f:true,d:true,desc:'Responsive foam, recycled knit upper, reflective accents.',img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600',t:['shoes','running','eco']},
+  {n:'FlowThread Joggers V2',sku:'FLW-JGR-047',c:'fashion',p:65,cp:85,s:40,r:4.6,rc:3770,f:false,d:false,desc:'4-way stretch, tapered fit, deep zip pockets, 2 colors.',img:'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600',t:['joggers','activewear','stretch']},
+  {n:'PolarFleece Zip Hoodie',sku:'POL-HDI-048',c:'fashion',p:89,cp:119,s:35,r:4.6,rc:1560,f:false,d:true,desc:'Heavyweight 340gsm fleece, full-zip, kangaroo pocket.',img:'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600',t:['hoodie','fleece','winter']},
+  {n:'StormWalk Hiking Boots',sku:'STM-BOT-049',c:'fashion',p:159,cp:199,s:18,r:4.7,rc:1780,f:true,d:false,desc:'Waterproof leather + mesh, Vibram sole, ankle support.',img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600',t:['boots','hiking','vibram']},
+  {n:'ThermalTech Insulated Vest',sku:'THM-VST-050',c:'fashion',p:79,cp:109,s:28,r:4.6,rc:1120,f:false,d:false,desc:'Lightweight puffer vest, 800-fill down, packable.',img:'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600',t:['vest','down','packable']},
+  {n:'CityTote Canvas Bag XL',sku:'CTY-TOT-051',c:'fashion',p:49,cp:65,s:70,r:4.4,rc:1340,f:false,d:false,desc:'Heavy canvas, inner laptop sleeve 15", magnetic snap closure.',img:'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=600',t:['tote','canvas','laptop']},
+  {n:'ApexCap UPF50 Hat',sku:'APX-CAP-052',c:'fashion',p:34,cp:45,s:55,r:4.5,rc:880,f:false,d:false,desc:'Moisture-wicking, UPF 50+, one-size flex fit, 6 colors.',img:'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600',t:['cap','upf50','sport']},
+  {n:'NovaFlex Compression Tee',sku:'NOV-TEE-053',c:'fashion',p:45,cp:60,s:60,r:4.5,rc:2030,f:false,d:false,desc:'4-way stretch compression top, moisture-wick, UV protection.',img:'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600',t:['tee','compression','uv']},
+  {n:'GridMesh Gym Shorts',sku:'GRD-SHT-054',c:'fashion',p:35,cp:50,s:75,r:4.5,rc:2890,f:false,d:false,desc:'7" inseam, mesh lining, zip pocket, anti-odor fabric.',img:'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600',t:['shorts','gym','mesh']},
+  {n:'LeatherFold Wallet Pro',sku:'LTH-WLT-055',c:'fashion',p:59,cp:79,s:80,r:4.6,rc:3450,f:false,d:true,desc:'Full-grain leather slim wallet, RFID blocking, 12 card slots.',img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['wallet','leather','rfid']},
+
+  // ── BEAUTY (8) ────────────────────────────────────────────────────
+  {n:'GlowKit Vitamin C Serum',sku:'GLW-SRM-056',c:'beauty',p:79,cp:99,s:33,r:4.8,rc:6220,f:true,d:true,desc:'20% Vit-C + Niacinamide, 30ml, clinical-grade brightening.',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['serum','vitamin-c','brightening']},
+  {n:'HydraHero SPF50 Moisturizer',sku:'HYD-MST-057',c:'beauty',p:49,cp:65,s:60,r:4.7,rc:4310,f:true,d:false,desc:'SPF50 lightweight moisturizer, hyaluronic acid, fragrance-free.',img:'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600',t:['moisturizer','spf','hydrating']},
+  {n:'SleekBrush Air Styler',sku:'SLK-STL-058',c:'beauty',p:129,cp:169,s:22,r:4.7,rc:3890,f:true,d:true,desc:'5-in-1 hair styler, ionic technology, brushless motor.',img:'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',t:['hair-styler','ionic','beauty']},
+  {n:'PureGlow Jade Roller Set',sku:'PUR-JDE-059',c:'beauty',p:35,cp:49,s:90,r:4.5,rc:2780,f:false,d:false,desc:'Genuine jade roller + gua sha, depuffing, firming.',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['jade-roller','facial','gua-sha']},
+  {n:'LipLux Long-Wear Set 12',sku:'LPL-LWS-060',c:'beauty',p:45,cp:59,s:55,r:4.6,rc:1890,f:false,d:false,desc:'12-shade long-wear liquid lipstick set, matte finish, 24h.',img:'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=600',t:['lipstick','makeup','long-wear']},
+  {n:'DermaTool Micro-Needler',sku:'DRM-NDL-061',c:'beauty',p:89,cp:119,s:28,r:4.5,rc:1230,f:false,d:false,desc:'0.5mm titanium micro-needler roller, collagen induction.',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['micro-needling','collagen','skincare']},
+  {n:'NailKit LED Gel Set',sku:'NAL-GEL-062',c:'beauty',p:69,cp:89,s:40,r:4.7,rc:3450,f:false,d:true,desc:'Pro gel nail kit with 48W LED lamp, 20 gel polishes.',img:'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',t:['gel-nails','led','nail-art']},
+  {n:'ScentLab Perfume Sampler 10',sku:'SCN-PRF-063',c:'beauty',p:59,cp:79,s:45,r:4.6,rc:2100,f:true,d:false,desc:'10 x 2ml designer-inspired perfume collection, gift box.',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600',t:['perfume','fragrance','sampler']},
+
+  // ── SPORTS (10) ───────────────────────────────────────────────────
+  {n:'IronGrip Adjustable Dumbbells',sku:'IRN-DBL-064',c:'sports',p:249,cp:329,s:14,r:4.8,rc:4320,f:true,d:true,desc:'5-52.5lb adjustable dumbbell set, space-saving, quick-lock.',img:'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600',t:['dumbbells','weights','fitness']},
+  {n:'FlexBand Resistance Kit Pro',sku:'FLX-BND-065',c:'sports',p:39,cp:55,s:150,r:4.6,rc:7890,f:false,d:false,desc:'6-level latex resistance bands, handles + door anchor kit.',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['resistance-bands','fitness','home-gym']},
+  {n:'PaceTrack GPS Running Watch',sku:'PCE-WCH-066',c:'sports',p:279,cp:349,s:16,r:4.7,rc:2560,f:true,d:false,desc:'GPS running watch, VO2 max, 20h battery, heart rate.',img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['running-watch','gps','vo2max']},
+  {n:'AirBike Pro X',sku:'AIR-BKE-067',c:'sports',p:499,cp:649,s:8,r:4.9,rc:1890,f:true,d:true,desc:'Air resistance bike, unlimited resistance, full-body HIIT.',img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600',t:['bike','hiit','cardio']},
+  {n:'NeoSurf Foam Roller PRO',sku:'NEO-FMR-068',c:'sports',p:35,cp:49,s:120,r:4.5,rc:3450,f:false,d:false,desc:'High-density vibrating foam roller, 3 speeds, USB-C charge.',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['foam-roller','recovery','vibration']},
+  {n:'PullPod Door Pull-Up Bar',sku:'PLL-BAR-069',c:'sports',p:49,cp:65,s:90,r:4.6,rc:5670,f:false,d:false,desc:'No-drill door pull-up bar, 300lb capacity, multi-grip.',img:'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600',t:['pull-up-bar','home-gym','strength']},
+  {n:'SpeedJump Digital Rope',sku:'SPD-JMP-070',c:'sports',p:29,cp:39,s:200,r:4.5,rc:4320,f:false,d:false,desc:'Digital jump rope with calorie counter, LED speed display.',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['jump-rope','cardio','fitness']},
+  {n:'ComprePro Knee Sleeves',sku:'CMP-KNE-071',c:'sports',p:49,cp:65,s:80,r:4.7,rc:2890,f:false,d:true,desc:'7mm neoprene knee sleeves pair, powerlifting, thermal support.',img:'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600',t:['knee-sleeves','powerlifting','support']},
+  {n:'HydroVault Bottle 32oz',sku:'HYD-BTL-072',c:'sports',p:39,cp:55,s:180,r:4.8,rc:8900,f:true,d:false,desc:'32oz insulated bottle, 48h cold / 24h hot, leak-proof lid.',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['water-bottle','insulated','hydration']},
+  {n:'YogaMat Alignment Pro 6mm',sku:'YGA-MAT-073',c:'sports',p:79,cp:99,s:70,r:4.7,rc:3210,f:false,d:true,desc:'6mm TPE yoga mat, alignment lines, eco-friendly, carry strap.',img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600',t:['yoga','mat','eco']},
+
+  // ── OFFICE (8) ────────────────────────────────────────────────────
+  {n:'ErgoChair Pro Lumbar',sku:'ERG-CHR-074',c:'office',p:449,cp:599,s:10,r:4.8,rc:3450,f:true,d:false,desc:'Ergonomic mesh chair, adjustable lumbar, 4D armrests.',img:'https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=600',t:['chair','ergonomic','lumbar']},
+  {n:'DeskMate Bamboo Organizer',sku:'DSK-ORG-075',c:'office',p:55,cp:75,s:80,r:4.6,rc:2100,f:false,d:false,desc:'Bamboo desk organizer, 7 compartments, pen holder, cable slot.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['organizer','bamboo','desk']},
+  {n:'TaskLamp LED Architect',sku:'TSK-LMP-076',c:'office',p:89,cp:119,s:45,r:4.7,rc:1890,f:false,d:true,desc:'Architect desk lamp, touch dimmer, USB-A charge port, 5 CCT.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['desk-lamp','led','charging']},
+  {n:'NoteAir E-Ink Tablet 10',sku:'NOT-TAB-077',c:'office',p:399,cp:499,s:12,r:4.7,rc:1230,f:true,d:false,desc:'10" E-ink writing tablet, stylus, 3 weeks battery, export PDF.',img:'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?w=600',t:['e-ink','tablet','writing']},
+  {n:'CardScan Pro Business Set',sku:'CRD-SCN-078',c:'office',p:79,cp:99,s:35,r:4.5,rc:870,f:false,d:false,desc:'Portable card scanner, auto-import to contacts, 600 DPI.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['scanner','business','productivity']},
+  {n:'QuietKey Wireless Keyboard',sku:'QTK-KBD-079',c:'office',p:69,cp:89,s:55,r:4.6,rc:3210,f:false,d:false,desc:'Ultra-quiet slim keyboard, multi-device BT, rechargeable.',img:'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600',t:['keyboard','wireless','quiet']},
+  {n:'PhoneArm Gooseneck Mount',sku:'PHN-MNT-080',c:'office',p:29,cp:39,s:200,r:4.5,rc:4560,f:false,d:false,desc:'Flexible gooseneck phone mount, desk clamp, 360° rotation.',img:'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600',t:['mount','phone','flexible']},
+  {n:'DocuPrint Mini Printer',sku:'DCU-PRN-081',c:'office',p:129,cp:169,s:28,r:4.6,rc:1980,f:false,d:true,desc:'Pocket photo + doc printer, Bluetooth, thermal, no ink.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['printer','portable','thermal']},
+
+  // ── MUSIC (8) ─────────────────────────────────────────────────────
+  {n:'StringMaster Guitar Kit',sku:'STR-GTR-082',c:'music',p:189,cp:249,s:14,r:4.7,rc:1450,f:true,d:false,desc:'Acoustic guitar starter kit, tuner + strap + picks + bag.',img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600',t:['guitar','acoustic','beginner']},
+  {n:'BeatBox Mini Drum Pad 8',sku:'BTB-DRM-083',c:'music',p:89,cp:119,s:30,r:4.6,rc:890,f:false,d:true,desc:'8-pad MIDI drum controller, velocity-sensitive, USB + BT.',img:'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=600',t:['drum-pad','midi','controller']},
+  {n:'AudioLab USB Interface 2x2',sku:'AUD-INT-084',c:'music',p:149,cp:189,s:22,r:4.8,rc:2340,f:true,d:false,desc:'2-in/2-out audio interface, 24bit/192kHz, phantom power.',img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['audio-interface','recording','studio']},
+  {n:'MonitorPods Studio Speaker',sku:'MON-SPK-085',c:'music',p:299,cp:379,s:12,r:4.7,rc:1120,f:true,d:false,desc:'5" bi-amped studio monitors pair, flat response, RCA/XLR.',img:'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600',t:['studio-monitor','speakers','mixing']},
+  {n:'KeyLab MIDI Piano 49',sku:'KEY-MID-086',c:'music',p:249,cp:319,s:15,r:4.7,rc:980,f:false,d:true,desc:'49-key MIDI keyboard, aftertouch, pitch/mod wheel, DAW.',img:'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=600',t:['midi','piano','keyboard']},
+  {n:'CaptureMic Condenser Studio',sku:'CAP-MIC-087',c:'music',p:119,cp:159,s:28,r:4.8,rc:3450,f:false,d:false,desc:'Large-diaphragm condenser mic, cardioid, shock mount, pop filter.',img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['microphone','condenser','recording']},
+  {n:'HarpCase Transport Bag XL',sku:'HRP-BAG-088',c:'music',p:69,cp:89,s:40,r:4.5,rc:560,f:false,d:false,desc:'Heavy-duty instrument transport bag, 25mm foam, shoulder strap.',img:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600',t:['instrument-bag','transport','protection']},
+  {n:'SoundProof Acoustic Panels 6',sku:'SND-PNL-089',c:'music',p:79,cp:99,s:55,r:4.6,rc:1230,f:false,d:false,desc:'6-pack 12x12 acoustic foam panels, NRC 0.98, peel-stick.',img:'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',t:['acoustic-panels','soundproofing','studio']},
+
+  // ── TRAVEL (8) ────────────────────────────────────────────────────
+  {n:'TravelPro Spinner 28" Luggage',sku:'TRV-LGG-090',c:'travel',p:229,cp:299,s:18,r:4.7,rc:3450,f:true,d:false,desc:'Lightweight hardshell spinner, TSA lock, expandable, 28".',img:'https://images.unsplash.com/photo-1553531889-56cc480ac5cb?w=600',t:['luggage','suitcase','spinner']},
+  {n:'PackLight Travel Backpack 40L',sku:'PCK-BKP-091',c:'travel',p:129,cp:169,s:25,r:4.8,rc:4560,f:true,d:true,desc:'40L carry-on backpack, clam-shell opening, laptop sleeve.',img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600',t:['backpack','travel','carry-on']},
+  {n:'NeckCloud Inflatable Pillow',sku:'NCK-PIL-092',c:'travel',p:29,cp:39,s:250,r:4.5,rc:8900,f:false,d:false,desc:'Inflatable neck pillow, 3D ergonomic contour, packable.',img:'https://images.unsplash.com/photo-1553531889-56cc480ac5cb?w=600',t:['neck-pillow','travel','comfort']},
+  {n:'GlobeAdapter Universal Kit',sku:'GLB-ADP-093',c:'travel',p:39,cp:55,s:180,r:4.6,rc:6780,f:false,d:false,desc:'Universal travel adapter, 200 countries, 4 USB-A + 2 USB-C.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['adapter','universal','travel']},
+  {n:'TechOrg Packing Cube Set 5',sku:'TCH-PCK-094',c:'travel',p:35,cp:49,s:150,r:4.7,rc:5670,f:false,d:false,desc:'5-piece compression packing cubes, waterproof, slim handles.',img:'https://images.unsplash.com/photo-1553531889-56cc480ac5cb?w=600',t:['packing-cubes','organization','travel']},
+  {n:'AeroBottle TSA Water Flask',sku:'AER-BTL-095',c:'travel',p:29,cp:39,s:200,r:4.5,rc:3450,f:false,d:true,desc:'TSA-approved collapsible water bottle, folds flat, BPA-free.',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600',t:['water-bottle','tsa','collapsible']},
+  {n:'NapShade Sleep Mask Pro',sku:'NAP-MSK-096',c:'travel',p:25,cp:35,s:300,r:4.6,rc:7890,f:false,d:false,desc:'3D contoured sleep mask, zero light, memory foam nose bridge.',img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600',t:['sleep-mask','blackout','travel']},
+  {n:'LockSafe TSA Combo Padlock',sku:'LCK-PDL-097',c:'travel',p:19,cp:29,s:500,r:4.7,rc:9870,f:false,d:false,desc:'TSA-approved combination padlock, 4-dial, cable included.',img:'https://images.unsplash.com/photo-1553531889-56cc480ac5cb?w=600',t:['padlock','tsa','security']},
+
+  // ── BOOKS (6) ─────────────────────────────────────────────────────
+  {n:'KindlePad E-Reader 11th',sku:'KND-RDR-098',c:'books',p:139,cp:179,s:35,r:4.9,rc:15600,f:true,d:false,desc:'11th gen e-reader, 6" 300ppi glare-free, weeks battery.',img:'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600',t:['e-reader','kindle','reading']},
+  {n:'FlipStand Book Holder Pro',sku:'FLP-BKH-099',c:'books',p:29,cp:39,s:200,r:4.6,rc:4560,f:false,d:false,desc:'Adjustable book stand, cookbook + textbook holder, folds flat.',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',t:['book-stand','reading','cookbook']},
+  {n:'StudyLight Clip Desk Lamp',sku:'STD-LMP-100',c:'books',p:35,cp:49,s:120,r:4.5,rc:3210,f:false,d:false,desc:'USB rechargeable reading light, 3 brightness, clip + stand.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['reading-light','clip','rechargeable']},
+  {n:'NoteMax Hardcover A5 Journal',sku:'NOT-JNL-101',c:'books',p:19,cp:29,s:500,r:4.7,rc:8900,f:false,d:false,desc:'200-page dotted journal, lay-flat binding, elastic band.',img:'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600',t:['journal','notebook','dotted']},
+  {n:'LearnTrack Language Cards',sku:'LRN-CRD-102',c:'books',p:25,cp:35,s:300,r:4.5,rc:2340,f:false,d:true,desc:'500 bilingual flash cards, Spanish/French/German/Japanese.',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',t:['flash-cards','language','learning']},
+  {n:'BookNook LED Display Shelf',sku:'BKN-SHF-103',c:'books',p:79,cp:99,s:40,r:4.6,rc:1890,f:true,d:false,desc:'LED lighted bookend display, 3 levels, battery or USB, oak.',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',t:['bookshelf','led','display']},
+
+  // ── KITCHEN (8) ───────────────────────────────────────────────────
+  {n:'ChefKnife Damascus 8"',sku:'CHF-KNF-104',c:'kitchen',p:129,cp:169,s:25,r:4.9,rc:4560,f:true,d:false,desc:'67-layer Damascus steel chef knife, G10 handle, VG10 core.',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',t:['knife','damascus','chef']},
+  {n:'AirFryer Pro XL 7QT',sku:'AIR-FRY-105',c:'kitchen',p:119,cp:159,s:30,r:4.7,rc:7890,f:true,d:true,desc:'7QT digital air fryer, 8 presets, touchscreen, dishwasher safe.',img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['air-fryer','cooking','healthy']},
+  {n:'BlendTech Smart Blender 1200W',sku:'BLD-PRO-106',c:'kitchen',p:199,cp:259,s:18,r:4.8,rc:3450,f:true,d:true,desc:'1200W professional blender, 3 auto programs, self-clean.',img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['blender','smoothie','kitchen']},
+  {n:'PourPerfect Gooseneck Kettle',sku:'PRP-KTL-107',c:'kitchen',p:79,cp:99,s:55,r:4.7,rc:5670,f:false,d:false,desc:'Electric gooseneck kettle, 6 temp presets, 1L, keep-warm.',img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600',t:['kettle','coffee','precision']},
+  {n:'SteelPan Non-Stick 12" Set',sku:'STL-PAN-108',c:'kitchen',p:89,cp:119,s:40,r:4.6,rc:4320,f:false,d:false,desc:'3-piece stainless + non-stick cookware, oven-safe 500°F.',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',t:['pans','cookware','non-stick']},
+  {n:'SpicePro Herb Grinder Steel',sku:'SPC-GRD-109',c:'kitchen',p:39,cp:55,s:120,r:4.5,rc:6780,f:false,d:false,desc:'4-layer herb grinder, diamond teeth, kief catcher, brushed steel.',img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600',t:['grinder','herb','spice']},
+  {n:'WaffleIron Crispy Belgian',sku:'WFL-IRN-110',c:'kitchen',p:59,cp:79,s:60,r:4.7,rc:2340,f:false,d:true,desc:'Belgian waffle maker, 4 servings, non-stick, ready indicator.',img:'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',t:['waffle','breakfast','non-stick']},
+  {n:'MealPrep Glass Container 10pc',sku:'MPR-CNT-111',c:'kitchen',p:49,cp:65,s:90,r:4.6,rc:4560,f:false,d:false,desc:'10-piece borosilicate glass meal prep set, oven + microwave safe.',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',t:['meal-prep','glass','containers']},
+
+  // ── PETS (8) ──────────────────────────────────────────────────────
+  {n:'SmartFeed Auto Pet Feeder',sku:'SMT-FDR-112',c:'pets',p:79,cp:99,s:45,r:4.7,rc:3450,f:true,d:false,desc:'Wi-Fi auto pet feeder, 6L, app schedule, meal notifications.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-feeder','auto','smart']},
+  {n:'PawPrint DNA Kit',sku:'PAW-DNA-113',c:'pets',p:89,cp:119,s:30,r:4.5,rc:2100,f:false,d:false,desc:'Dog DNA breed + health test, 350+ breeds, vet-grade results.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['dna','dog','health']},
+  {n:'HippoWash Dog Grooming Kit',sku:'HPW-GRM-114',c:'pets',p:59,cp:79,s:60,r:4.6,rc:1890,f:false,d:true,desc:'6-piece dog grooming kit, waterless shampoo + brush + nail file.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['grooming','dog','pet-care']},
+  {n:'PetCam HD 1080P Treat Dispenser',sku:'PCT-CAM-115',c:'pets',p:149,cp:199,s:22,r:4.7,rc:2340,f:true,d:false,desc:'1080P pet camera, treat dispenser, 2-way audio, night vision.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-camera','treat-dispenser','wifi']},
+  {n:'FleeceNest Cat Tree XL',sku:'FLC-TRE-116',c:'pets',p:99,cp:129,s:18,r:4.5,rc:1560,f:false,d:false,desc:'5-tier cat tree, sisal posts, plush beds, hammock, 65".',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['cat-tree','cat','scratcher']},
+  {n:'HydroFresh Pet Water Fountain',sku:'HYD-FNT-117',c:'pets',p:45,cp:59,s:80,r:4.7,rc:5670,f:false,d:false,desc:'3L filtered pet fountain, triple filter, ultra-quiet, SS.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['water-fountain','pet','filter']},
+  {n:'TravelPet Airline Carrier Bag',sku:'TRV-CAR-118',c:'pets',p:69,cp:89,s:40,r:4.5,rc:1230,f:false,d:true,desc:'IATA-approved airline pet carrier, telescoping handle, mesh.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-carrier','airline','travel']},
+  {n:'ZoomBall Interactive Dog Toy',sku:'ZOM-TOY-119',c:'pets',p:29,cp:39,s:150,r:4.6,rc:3450,f:false,d:false,desc:'Automatic moving ball, motion-activated, 3 speeds, USB charge.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['dog-toy','interactive','automatic']},
 ]
 
 async function main() {
-  console.log('🌱 Seeding CortexCart with 100 products...')
+  console.log('🌱 Seeding CortexCart database...')
 
-  await prisma.user.upsert({ where:{email:'admin@cortexcart.com'}, update:{},
-    create:{email:'admin@cortexcart.com',name:'Admin',password:await bcrypt.hash('admin123',12),role:'ADMIN',emailVerified:new Date()}})
-  await prisma.user.upsert({ where:{email:'demo@cortexcart.com'}, update:{},
-    create:{email:'demo@cortexcart.com',name:'Demo User',password:await bcrypt.hash('demo1234',12),role:'CUSTOMER',emailVerified:new Date()}})
-
-  const catMap: Record<string,string> = {}
-  for (const c of CATS) {
-    const r = await prisma.category.upsert({ where:{slug:c.slug}, update:{name:c.name},
-      create:{name:c.name,slug:c.slug,description:c.description}})
-    catMap[c.slug] = r.id
+  // Categories
+  const catMap: Record<string, string> = {}
+  for (const cat of CATS) {
+    const record = await prisma.category.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, description: cat.description },
+      create: cat,
+    })
+    catMap[cat.slug] = record.id
   }
-  console.log(`✅ ${CATS.length} categories`)
+  console.log(`✅ ${CATS.length} categories seeded`)
 
-  let count = 0
+  // Products
+  let seeded = 0
   for (const p of PRODUCTS) {
-    const slug = p.n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
-    const cid  = catMap[p.c]
-    if (!cid) continue
-    await prisma.product.upsert({ where:{slug},
-      update:{basePrice:p.p,currentPrice:p.p,comparePrice:p.cp,stock:p.s},
-      create:{slug,sku:p.sku,name:p.n,description:p.desc,brand:p.n.split(' ')[0],
-              categoryId:cid,images:[p.img],tags:p.t,
-              basePrice:p.p,currentPrice:p.p,comparePrice:p.cp,
-              stock:p.s,rating:p.r,reviewCount:p.rc,
-              isFeatured:p.f,isDeal:p.d,isActive:true}})
-    count++
+    const slug = sl(p.n)
+    const catId = catMap[p.c]
+    if (!catId) { console.warn(`⚠️  No category for ${p.c}`); continue }
+
+    await prisma.product.upsert({
+      where: { sku: p.sku },
+      update: {
+        name: p.n, slug, description: p.desc,
+        basePrice: p.cp, currentPrice: p.p, comparePrice: p.cp,
+        stock: p.s, rating: p.r, reviewCount: p.rc,
+        isFeatured: p.f, isDeal: p.d,
+        images: [p.img, p.img, p.img],
+        tags: p.t, isActive: true,
+      },
+      create: {
+        sku: p.sku, slug, name: p.n,
+        description: p.desc, brand: p.sku.split('-')[0],
+        categoryId: catId, images: [p.img, p.img, p.img], tags: p.t,
+        basePrice: p.cp, currentPrice: p.p, comparePrice: p.cp,
+        stock: p.s, rating: p.r, reviewCount: p.rc,
+        isFeatured: p.f, isDeal: p.d, isActive: true,
+      },
+    })
+    seeded++
   }
-  console.log(`✅ ${count} products seeded!`)
+  console.log(`✅ ${seeded} products seeded`)
+
+  // Admin user
+  const pw = await bcrypt.hash('admin123', 10)
+  await prisma.user.upsert({
+    where: { email: 'admin@cortexcart.com' },
+    update: {},
+    create: {
+      email: 'admin@cortexcart.com', name: 'Admin',
+      password: pw, role: 'ADMIN',
+    },
+  })
+  console.log('✅ Admin user seeded (admin@cortexcart.com / admin123)')
+  console.log('🎉 Seed complete!')
 }
 
-main().catch(e=>{console.error(e);process.exit(1)}).finally(()=>prisma.$disconnect())
+main().catch(e => { console.error(e); process.exit(1) }).finally(() => prisma.$disconnect())

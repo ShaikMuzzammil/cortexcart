@@ -1,7 +1,20 @@
+# host/ — inherits root .gitignore, local overrides only
 node_modules/
 .next/
+out/
+build/
+dist/
+
 .env
 .env.local
-.env*.local
+.env.*.local
+# .env.example ← intentionally NOT ignored
+
+.vercel
+prisma/generated/
 *.log
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
+.idea/
+.vscode/

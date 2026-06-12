@@ -1,123 +1,112 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 
 export function CustomCursor() {
-  const cursorRef  = useRef<HTMLDivElement>(null)
-  const dotRef     = useRef<HTMLDivElement>(null)
-  const [visible,  setVisible]  = useState(false)
-  const [clicking, setClicking] = useState(false)
-  const [hovering, setHovering] = useState(false)
-  const [text,     setText]     = useState('')
-
-  const mx = useMotionValue(0)
-  const my = useMotionValue(0)
-
-  // Ring follows with spring lag
-  const rx = useSpring(mx, { stiffness: 200, damping: 22, mass: 0.5 })
-  const ry = useSpring(my, { stiffness: 200, damping: 22, mass: 0.5 })
+  const dotRef  = useRef<HTMLDivElement>(null)
+  const ringRef = useRef<HTMLDivElement>(null)
+  const glowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      mx.set(e.clientX); my.set(e.clientY)
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${e.clientX - 3}px,${e.clientY - 3}px,0)`
+    if (typeof window === 'undefined') return
+    const dot  = dotRef.current
+    const ring = ringRef.current
+    const glow = glowRef.current
+    if (!dot || !ring || !glow) return
+
+    let mx = 0, my = 0
+    let rx = 0, ry = 0
+    let visible = false
+    let hovering = false
+    let raf: number
+
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+    const tick = () => {
+      rx = lerp(rx, mx, 0.18)
+      ry = lerp(ry, my, 0.18)
+
+      dot.style.transform  = `translate3d(${mx - 3}px,${my - 3}px,0)`
+      ring.style.transform = `translate3d(${rx - (hovering ? 22 : 16)}px,${ry - (hovering ? 22 : 16)}px,0)`
+      glow.style.transform = `translate3d(${rx - 40}px,${ry - 40}px,0)`
+
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    const show = () => {
+      if (!visible) {
+        visible = true
+        dot.style.opacity  = '1'
+        ring.style.opacity = '1'
+        glow.style.opacity = '1'
       }
-      setVisible(true)
+    }
+    const hide = () => {
+      visible = false
+      dot.style.opacity  = '0'
+      ring.style.opacity = '0'
+      glow.style.opacity = '0'
     }
 
-    const onDown = () => setClicking(true)
-    const onUp   = () => setClicking(false)
-    const onLeave= () => setVisible(false)
-    const onEnter= () => setVisible(true)
-
-    const onHoverEnter = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => { mx = e.clientX; my = e.clientY; show() }
+    const onOver = (e: MouseEvent) => {
       const t = e.target as HTMLElement
-      const isLink    = t.closest('a,button,[data-cursor]')
-      const cursorTxt = (isLink as HTMLElement)?.dataset?.cursor || ''
-      setHovering(!!isLink)
-      setText(cursorTxt)
+      const isClickable = !!t.closest('a,button,input,textarea,select,[role=button],[data-cursor]')
+      hovering = isClickable
+      ring.style.width  = isClickable ? '44px' : '32px'
+      ring.style.height = isClickable ? '44px' : '32px'
+      ring.style.borderColor = isClickable ? 'rgba(16,217,136,0.8)' : 'rgba(16,217,136,0.4)'
+      ring.style.background  = isClickable ? 'rgba(16,217,136,0.06)' : 'transparent'
     }
-    const onHoverLeave = () => { setHovering(false); setText('') }
+    const onDown = () => {
+      dot.style.transform = dot.style.transform + ' scale(1.8)'
+      ring.style.transform = ring.style.transform + ' scale(0.8)'
+      ring.style.background = 'rgba(16,217,136,0.15)'
+    }
+    const onUp = () => {
+      ring.style.background = hovering ? 'rgba(16,217,136,0.06)' : 'transparent'
+    }
 
-    window.addEventListener('mousemove',   onMove)
+    window.addEventListener('mousemove',   onMove,  { passive: true })
+    window.addEventListener('mouseover',   onOver,  { passive: true })
     window.addEventListener('mousedown',   onDown)
     window.addEventListener('mouseup',     onUp)
-    document.addEventListener('mouseleave',onLeave)
-    document.addEventListener('mouseenter',onEnter)
-    document.addEventListener('mouseover', onHoverEnter)
-    document.addEventListener('mouseout',  onHoverLeave)
+    document.addEventListener('mouseleave', hide)
+    document.addEventListener('mouseenter', show)
 
     return () => {
+      cancelAnimationFrame(raf)
       window.removeEventListener('mousemove',   onMove)
+      window.removeEventListener('mouseover',   onOver)
       window.removeEventListener('mousedown',   onDown)
       window.removeEventListener('mouseup',     onUp)
-      document.removeEventListener('mouseleave',onLeave)
-      document.removeEventListener('mouseenter',onEnter)
-      document.removeEventListener('mouseover', onHoverEnter)
-      document.removeEventListener('mouseout',  onHoverLeave)
+      document.removeEventListener('mouseleave', hide)
+      document.removeEventListener('mouseenter', show)
     }
   }, [])
 
-  if (typeof window === 'undefined') return null
-
   return (
     <>
-      {/* Dot — follows cursor exactly (raw CSS for zero lag) */}
-      <div
-        ref={dotRef}
-        className="pointer-events-none fixed top-0 left-0 z-[99999] transition-opacity duration-200"
-        style={{
-          width:6, height:6, borderRadius:'50%',
-          background:'#10d988',
-          willChange:'transform',
-          opacity: visible ? 1 : 0,
-        }}
-      />
-
-      {/* Ring — spring-lagged follower */}
-      <motion.div
-        className="pointer-events-none fixed top-0 left-0 z-[99998] flex items-center justify-center"
-        style={{
-          x: rx, y: ry,
-          translateX: '-50%', translateY: '-50%',
-          opacity: visible ? 1 : 0,
-        }}
-        animate={{
-          width:  clicking ? 20 : hovering ? 48 : 32,
-          height: clicking ? 20 : hovering ? 48 : 32,
-        }}
-        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-      >
-        <motion.div
-          className="w-full h-full rounded-full flex items-center justify-center"
-          style={{
-            border: `1.5px solid ${hovering ? 'rgba(16,217,136,0.7)' : 'rgba(16,217,136,0.35)'}`,
-            background: clicking ? 'rgba(16,217,136,0.15)' : hovering ? 'rgba(16,217,136,0.08)' : 'transparent',
-            backdropFilter: hovering ? 'blur(4px)' : 'none',
-          }}
-          animate={{ scale: clicking ? 0.85 : 1 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        >
-          {text && (
-            <span style={{ fontSize: 8, fontWeight: 800, color: '#10d988', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>
-              {text}
-            </span>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* Trail glow — subtle glow that fades */}
-      <motion.div
-        className="pointer-events-none fixed top-0 left-0 z-[99997] rounded-full"
-        style={{
-          x: rx, y: ry,
-          translateX: '-50%', translateY: '-50%',
-          width: 80, height: 80,
-          background: 'radial-gradient(circle, rgba(16,217,136,0.06) 0%, transparent 70%)',
-          opacity: visible ? 1 : 0,
-        }}
-      />
+      {/* Zero-lag dot */}
+      <div ref={dotRef} style={{
+        position:'fixed', top:0, left:0, width:6, height:6, borderRadius:'50%',
+        background:'#10d988', pointerEvents:'none', zIndex:99999,
+        opacity:0, willChange:'transform',
+        boxShadow:'0 0 6px rgba(16,217,136,0.8)',
+      }}/>
+      {/* Lagged ring */}
+      <div ref={ringRef} style={{
+        position:'fixed', top:0, left:0, width:32, height:32, borderRadius:'50%',
+        border:'1.5px solid rgba(16,217,136,0.4)', pointerEvents:'none', zIndex:99998,
+        opacity:0, willChange:'transform',
+        transition:'width 0.15s ease, height 0.15s ease, border-color 0.15s ease, background 0.15s ease',
+      }}/>
+      {/* Soft glow */}
+      <div ref={glowRef} style={{
+        position:'fixed', top:0, left:0, width:80, height:80, borderRadius:'50%',
+        background:'radial-gradient(circle, rgba(16,217,136,0.05) 0%, transparent 70%)',
+        pointerEvents:'none', zIndex:99997, opacity:0, willChange:'transform',
+      }}/>
     </>
   )
 }

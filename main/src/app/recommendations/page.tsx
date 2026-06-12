@@ -1,26 +1,15 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import {
-  Sparkles, Send, Loader2, ShoppingCart, Heart, Star,
-  ExternalLink, Zap, ArrowRight, TrendingUp, Package,
-  MessageSquare, ChevronRight, Search
-} from 'lucide-react'
+export const dynamic = 'force-dynamic'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useCartStore } from '@/store/cart'
+import { useCartStore }     from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
-import { formatPrice, cn } from '@/lib/utils'
+import { formatPrice, cn }  from '@/lib/utils'
 import toast from 'react-hot-toast'
-import { motion, AnimatePresence } from 'framer-motion'
-
-const SUGGESTIONS = [
-  'Best gaming accessories under $100',
-  'Top-rated wireless earbuds',
-  'Fitness gear for home workouts',
-  'Coffee brewing essentials',
-  'Smart home gadgets',
-  'Running shoes and gear',
-]
+import {
+  Sparkles, Send, ShoppingCart, Heart, Star, Package,
+  Loader2, ChevronRight, TrendingUp, Zap
+} from 'lucide-react'
 
 interface Product {
   id: string; name: string; slug: string; brand: string
@@ -28,262 +17,187 @@ interface Product {
   rating: number; reviews: number; category: string; reason: string
 }
 
-interface Message {
-  role: 'user' | 'assistant'
-  text?: string
-  products?: Product[]
-  loading?: boolean
-}
-
-function ProductCard({ p }: { p: Product }) {
-  const { addItem }     = useCartStore()
-  const { toggle, has } = useWishlistStore()
-  const wishlisted      = has(p.id)
-  const discount        = p.compare > p.price ? Math.round((1 - p.price / p.compare) * 100) : 0
-
-  return (
-    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="cx-card overflow-hidden group hover:border-cx-emerald/30 transition-all duration-300">
-      {/* Image */}
-      <div className="relative h-36 bg-cx-surface overflow-hidden">
-        {p.image
-          ? <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-          : <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-cx-border"/></div>
-        }
-        {discount > 0 && (
-          <span className="absolute top-2 left-2 text-[10px] font-800 bg-cx-rose text-white px-1.5 py-0.5 rounded-lg">-{discount}%</span>
-        )}
-        <button onClick={() => toggle({ id: p.id, slug: p.slug, name: p.name, price: p.price, image: p.image })}
-          className={cn('absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all',
-            wishlisted ? 'bg-cx-rose/20 text-cx-rose' : 'bg-cx-bg/80 text-cx-muted hover:text-cx-rose')}>
-          <Heart size={12} fill={wishlisted ? 'currentColor' : 'none'}/>
-        </button>
-      </div>
-
-      <div className="p-3 space-y-2">
-        <div>
-          <p className="text-[10px] text-cx-muted font-600">{p.brand} · {p.category}</p>
-          <p className="text-[13px] font-700 text-cx-text line-clamp-2 leading-tight">{p.name}</p>
-        </div>
-
-        {/* Reason */}
-        <div className="flex items-start gap-1.5 p-2 rounded-lg bg-cx-emerald/6 border border-cx-emerald/15">
-          <Sparkles size={10} className="text-cx-emerald flex-shrink-0 mt-0.5"/>
-          <p className="text-[10px] text-cx-emerald leading-relaxed">{p.reason}</p>
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-1">
-          {Array.from({length:5}).map((_,i) => (
-            <Star key={i} size={9} className={i < Math.floor(p.rating) ? 'text-cx-gold' : 'text-cx-border'} fill={i < Math.floor(p.rating) ? 'currentColor' : 'none'}/>
-          ))}
-          <span className="text-[10px] text-cx-muted ml-0.5">({p.reviews})</span>
-        </div>
-
-        {/* Price */}
-        <div className="flex items-center gap-2">
-          <span className="font-800 text-[15px] text-cx-emerald">{formatPrice(p.price)}</span>
-          {p.compare > p.price && <span className="text-[11px] text-cx-muted line-through">{formatPrice(p.compare)}</span>}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2 pt-1">
-          <button onClick={() => {
-            addItem({ id: p.id, slug: p.slug, name: p.name, price: p.price,
-              originalPrice: p.compare || p.price, image: p.image,
-              stock: 99, brand: p.brand || undefined })
-            toast.success('Added to cart!')
-          }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cx-emerald/15 text-cx-emerald text-[11px] font-700 hover:bg-cx-emerald/25 transition-all">
-            <ShoppingCart size={11}/> Add to Cart
-          </button>
-          <Link href={`/products/${p.slug}`}
-            className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl border border-cx-border text-cx-muted text-[11px] hover:border-cx-emerald/40 hover:text-cx-emerald transition-all">
-            <ExternalLink size={11}/>
-          </Link>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+const CHIPS = [
+  'Best laptop under $1000', 'Top-rated wireless earbuds', 'Gaming mouse for FPS',
+  'Running shoes for marathon', 'Smart home starter kit', 'Ergonomic office chair',
+  'Budget mechanical keyboard', 'Coffee maker with grinder', 'Yoga mat non-slip',
+  'Travel backpack carry-on',
+]
 
 export default function RecommendationsPage() {
-  const { data: session }       = useSession()
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input,    setInput]    = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const bottomRef               = useRef<HTMLDivElement>(null)
+  const [query,   setQuery]   = useState('')
+  const [results, setResults] = useState<Product[]>([])
+  const [loading, setLoading] = useState(false)
+  const [asked,   setAsked]   = useState('')
+  const [mode,    setMode]    = useState<'ai'|'keyword'|null>(null)
+  const { addItem }     = useCartStore()
+  const { toggle, has } = useWishlistStore()
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const ask = async (query: string) => {
-    if (!query.trim() || loading) return
-    setInput('')
-    setLoading(true)
-
-    setMessages(m => [...m,
-      { role: 'user', text: query },
-      { role: 'assistant', loading: true },
-    ])
-
+  const ask = async (q: string) => {
+    if (!q.trim() || loading) return
+    setLoading(true); setResults([]); setAsked(q)
     try {
       const res  = await fetch('/api/ai/recommend', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body:   JSON.stringify({ query }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ query: q }),
       })
       const data = await res.json()
-
-      setMessages(m => {
-        const updated = [...m]
-        updated[updated.length - 1] = {
-          role:     'assistant',
-          text:     data.recommendations?.length > 0
-            ? `Here are ${data.recommendations.length} picks from your store:`
-            : 'No matching products found. Try a different search.',
-          products: data.recommendations || [],
-        }
-        return updated
-      })
-    } catch {
-      setMessages(m => {
-        const updated = [...m]
-        updated[updated.length - 1] = { role: 'assistant', text: 'Something went wrong. Please try again.' }
-        return updated
-      })
-    }
+      setResults(data.recommendations || [])
+      setMode(data.mode || 'ai')
+    } catch { toast.error('Failed to get recommendations') }
     setLoading(false)
   }
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); ask(input) }
-
   return (
-    <div className="min-h-screen pb-28 sm:pb-12">
-      {/* Hero */}
-      <div className="relative overflow-hidden border-b border-cx-border/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-cx-emerald/5 via-transparent to-cx-violet/5"/>
-        <div className="max-w-4xl mx-auto px-4 py-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cx-emerald/10 border border-cx-emerald/20 mb-4">
-            <Sparkles size={12} className="text-cx-emerald"/>
-            <span className="text-[11px] font-700 text-cx-emerald uppercase tracking-widest">AI Shopping Assistant</span>
-          </div>
-          <h1 className="font-display font-800 text-3xl sm:text-4xl text-white mb-3">
-            Find Your Perfect <span className="grad-emerald">Product</span>
-          </h1>
-          <p className="text-cx-muted text-[14px] max-w-lg mx-auto">
-            Describe what you're looking for and our AI will recommend the best matches from our real catalog — with direct links to buy.
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen pt-10 pb-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
 
-      <div className="max-w-4xl mx-auto px-4 pt-6">
-        {/* Empty state */}
-        {messages.length === 0 && (
-          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} className="space-y-6 mb-6">
-            {/* Suggestions */}
-            <div>
-              <p className="text-[12px] font-700 text-cx-muted uppercase tracking-wide mb-3 flex items-center gap-2">
-                <TrendingUp size={12}/> Try asking about…
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTIONS.map(s => (
-                  <button key={s} onClick={() => ask(s)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-600 transition-all hover:scale-105"
-                    style={{ background: 'rgba(16,217,136,0.08)', border: '1px solid rgba(16,217,136,0.2)', color: '#10d988' }}>
-                    <Sparkles size={10}/> {s}
-                  </button>
-                ))}
+        {/* Hero */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-cx-violet/20 mb-5">
+            <Sparkles size={13} className="text-cx-violet animate-pulse"/>
+            <span className="text-[11px] font-700 text-cx-violet uppercase tracking-[0.12em]">AI Picks</span>
+          </div>
+          <h1 className="font-display font-800 text-4xl sm:text-5xl text-white mb-4">
+            Find Your <span className="grad-multi">Perfect Product</span>
+          </h1>
+          <p className="text-cx-dim text-[15px] max-w-xl mx-auto mb-3">
+            Describe what you're looking for. Our AI reads your intent and surfaces the best-matched products from our real catalog — instantly.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-[12px] text-cx-muted">
+            <TrendingUp size={12} className="text-cx-emerald"/>
+            <span>Powered by <span className="text-cx-emerald font-700">Claude AI</span> · Searches your real product catalog</span>
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-cx-emerald/20 to-cx-violet/20 blur-xl rounded-2xl"/>
+          <div className="relative flex gap-2 p-2 bg-cx-surface border border-cx-border/80 rounded-2xl">
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') ask(query) }}
+              placeholder="e.g. gaming mouse under $80, best wireless earbuds for gym..."
+              className="flex-1 bg-transparent px-3 py-3 text-[14px] text-cx-text placeholder:text-cx-muted focus:outline-none"
+            />
+            <button onClick={() => ask(query)} disabled={!query.trim() || loading}
+              className="btn-em px-5 py-3 rounded-xl text-[13px] flex items-center gap-2 disabled:opacity-50 min-w-[100px] justify-center">
+              {loading ? <Loader2 size={15} className="animate-spin"/> : <><Send size={13}/> Ask AI</>}
+            </button>
+          </div>
+        </div>
+
+        {/* Suggestion chips */}
+        <div className="flex flex-wrap gap-2 mb-10 justify-center">
+          {CHIPS.map(chip => (
+            <button key={chip} onClick={() => { setQuery(chip); ask(chip) }}
+              className="text-[12px] font-600 px-3 py-1.5 rounded-full bg-cx-card border border-cx-border text-cx-dim hover:text-cx-text hover:border-cx-emerald/30 hover:bg-cx-emerald/5 transition-all">
+              {chip}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-16">
+            <div className="inline-flex flex-col items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-cx-violet/10 border border-cx-violet/20 flex items-center justify-center">
+                <Sparkles size={20} className="text-cx-violet animate-pulse"/>
+              </div>
+              <p className="text-cx-dim text-[14px]">AI is searching your catalog for "<strong className="text-cx-text">{asked}</strong>"…</p>
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {!loading && results.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-[13px] text-cx-muted mb-1">Results for</p>
+                <h2 className="font-display font-800 text-2xl text-white">"{asked}"</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={cn('text-[11px] font-700 px-3 py-1 rounded-full', mode === 'ai' ? 'bg-cx-violet/10 text-cx-violet border border-cx-violet/20' : 'bg-cx-sky/10 text-cx-sky border border-cx-sky/20')}>
+                  {mode === 'ai' ? '✦ AI matched' : '● Keyword matched'}
+                </span>
+                <span className="text-[12px] text-cx-muted">{results.length} found</span>
               </div>
             </div>
 
-            {/* Info cards */}
-            <div className="grid sm:grid-cols-3 gap-3">
-              {[
-                { icon: Search,  title: 'Real Products',  desc: 'Searches our actual store catalog — every result you can buy right now' },
-                { icon: Sparkles,title: 'AI-Powered',     desc: 'Claude AI understands your needs and picks the best matches' },
-                { icon: Zap,     title: 'Instant Cart',   desc: 'Add to cart or wishlist directly from recommendations' },
-              ].map(c => (
-                <div key={c.title} className="cx-card p-4 text-center">
-                  <c.icon size={20} className="text-cx-emerald mx-auto mb-2"/>
-                  <p className="font-700 text-[13px] text-cx-text mb-1">{c.title}</p>
-                  <p className="text-[11px] text-cx-muted leading-relaxed">{c.desc}</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {results.map((p, i) => {
+                const disc = p.compare > p.price ? Math.round((1-p.price/p.compare)*100) : 0
+                return (
+                  <div key={p.id} className="cx-card p-0 overflow-hidden hover:border-cx-emerald/25 transition-all group">
+                    <div className="flex gap-4 p-4">
+                      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-cx-bg relative">
+                        {p.image
+                          ? <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+                          : <div className="w-full h-full flex items-center justify-center"><Package size={24} className="text-cx-border"/></div>}
+                        {disc > 0 && <span className="absolute top-1.5 left-1.5 text-[10px] font-800 bg-cx-rose text-white px-1.5 py-0.5 rounded-md">-{disc}%</span>}
+                        <span className="absolute top-1.5 right-1.5 text-[10px] font-700 bg-cx-bg/80 text-cx-muted px-1.5 py-0.5 rounded-md">#{i+1}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-700 text-cx-violet uppercase tracking-wider mb-1">{p.category || p.brand}</p>
+                        <h3 className="text-[14px] font-800 text-cx-text leading-tight mb-2">{p.name}</h3>
+                        <p className="text-[12px] text-cx-muted leading-relaxed line-clamp-2 mb-2">{p.reason}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {[1,2,3,4,5].map(s => <Star key={s} size={10} className={s <= Math.round(p.rating) ? 'fill-cx-gold text-cx-gold' : 'text-cx-border'}/>)}
+                          </div>
+                          <span className="text-[11px] text-cx-muted">({p.reviews?.toLocaleString()})</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-t border-cx-border/50 px-4 py-3 flex items-center gap-3">
+                      <div>
+                        <span className="text-[18px] font-900 text-cx-emerald">{formatPrice(p.price)}</span>
+                        {disc > 0 && <span className="text-[12px] text-cx-muted line-through ml-2">{formatPrice(p.compare)}</span>}
+                      </div>
+                      <div className="flex gap-2 ml-auto">
+                        <button onClick={() => toggle({ id:p.id, slug:p.slug, name:p.name, price:p.price, image:p.image })}
+                          className={cn('w-9 h-9 rounded-xl flex items-center justify-center transition-all border',
+                            has(p.id) ? 'bg-cx-rose/12 text-cx-rose border-cx-rose/20' : 'bg-cx-card text-cx-muted border-cx-border hover:text-cx-rose hover:border-cx-rose/20')}>
+                          <Heart size={14} fill={has(p.id) ? 'currentColor' : 'none'}/>
+                        </button>
+                        <button onClick={() => { addItem({ id:p.id, slug:p.slug, name:p.name, price:p.price, originalPrice:p.compare||p.price, image:p.image, stock:99, brand:p.brand||undefined }); toast.success(`${p.name} added!`) }}
+                          className="btn-em px-4 py-2 text-[12px] rounded-xl flex items-center gap-1.5">
+                          <ShoppingCart size={12}/> Add to Cart
+                        </button>
+                        <Link href={`/products/${p.slug}`}
+                          className="w-9 h-9 rounded-xl bg-cx-card border border-cx-border flex items-center justify-center text-cx-muted hover:text-cx-text hover:border-cx-emerald/30 transition-all">
+                          <ChevronRight size={14}/>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </motion.div>
+
+            <div className="mt-8 text-center">
+              <Link href="/products" className="btn-outline-em px-6 py-3 rounded-xl text-[13px] inline-flex items-center gap-2">
+                <Zap size={13}/> Browse All {results.length > 0 && 'Similar'} Products
+              </Link>
+            </div>
+          </div>
         )}
 
-        {/* Chat messages */}
-        <div className="space-y-5 mb-6">
-          <AnimatePresence>
-            {messages.map((msg, i) => (
-              <motion.div key={i} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}>
-                {msg.role === 'user' ? (
-                  <div className="flex justify-end">
-                    <div className="max-w-sm px-4 py-3 rounded-2xl rounded-tr-sm bg-cx-emerald/15 border border-cx-emerald/20">
-                      <p className="text-[13px] font-600 text-cx-text">{msg.text}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-cx-emerald to-cx-sky flex items-center justify-center">
-                        <Sparkles size={13} className="text-cx-bg"/>
-                      </div>
-                      <span className="text-[12px] font-700 text-cx-text">CortexCart AI</span>
-                    </div>
-
-                    {msg.loading ? (
-                      <div className="flex items-center gap-3 px-4 py-3 cx-card w-fit">
-                        <Loader2 size={14} className="animate-spin text-cx-emerald"/>
-                        <span className="text-[13px] text-cx-muted">Searching your catalog…</span>
-                      </div>
-                    ) : (
-                      <>
-                        {msg.text && (
-                          <div className="cx-card px-4 py-3 w-fit max-w-sm">
-                            <p className="text-[13px] text-cx-text">{msg.text}</p>
-                          </div>
-                        )}
-                        {msg.products && msg.products.length > 0 && (
-                          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {msg.products.map(p => <ProductCard key={p.id} p={p}/>)}
-                          </div>
-                        )}
-                        {msg.products && msg.products.length > 0 && (
-                          <Link href="/products"
-                            className="inline-flex items-center gap-2 text-[12px] text-cx-emerald hover:underline mt-1">
-                            Browse all products <ChevronRight size={12}/>
-                          </Link>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          <div ref={bottomRef}/>
-        </div>
-
-        {/* Input */}
-        <div className="sticky bottom-20 sm:bottom-6">
-          <form onSubmit={handleSubmit}
-            className="flex gap-3 p-3 rounded-2xl border border-cx-border bg-cx-bg/95 backdrop-blur-xl shadow-2xl">
-            <div className="flex-1 relative">
-              <MessageSquare size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-cx-muted pointer-events-none"/>
-              <input value={input} onChange={e => setInput(e.target.value)}
-                placeholder="e.g. gaming mouse under $80, best yoga mat, coffee gadgets…"
-                className="cx-input w-full pl-9 pr-4 py-3 text-[13px]"/>
+        {/* Empty state */}
+        {!loading && asked && results.length === 0 && (
+          <div className="text-center py-16 cx-card p-10">
+            <Package size={32} className="text-cx-muted mx-auto mb-4"/>
+            <p className="text-[16px] font-700 text-cx-dim mb-2">No matches found</p>
+            <p className="text-[13px] text-cx-muted mb-6">Try a simpler or broader term, like "wireless earbuds" or "gaming chair".</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {['wireless earbuds','gaming mouse','running shoes'].map(s => (
+                <button key={s} onClick={() => ask(s)} className="text-[12px] px-3 py-1.5 rounded-full bg-cx-card border border-cx-border text-cx-dim hover:text-cx-emerald hover:border-cx-emerald/30 transition-all">{s}</button>
+              ))}
             </div>
-            <button type="submit" disabled={loading || !input.trim()}
-              className="btn-em px-5 py-3 text-[13px] rounded-xl flex items-center gap-2 flex-shrink-0 disabled:opacity-50">
-              {loading ? <Loader2 size={15} className="animate-spin"/> : <Send size={15}/>}
-              <span className="hidden sm:inline">Ask AI</span>
-            </button>
-          </form>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -2,42 +2,33 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import {
-  Lock, Eye, EyeOff, Loader2, Zap, CheckCircle2,
-  AlertCircle, ShieldCheck, XCircle
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { Lock, Eye, EyeOff, Loader2, Zap, CheckCircle2, AlertCircle, ShieldCheck, XCircle } from 'lucide-react'
 
-function StrengthBar({ password }: { password: string }) {
-  const checks = [
-    { ok: password.length >= 8,   label:'8+ chars'     },
-    { ok: /[A-Z]/.test(password), label:'Uppercase'    },
-    { ok: /[0-9]/.test(password), label:'Number'       },
-    { ok: /[^a-zA-Z0-9]/.test(password), label:'Symbol' },
-  ]
-  const score = checks.filter(c => c.ok).length
-  const color = ['#f43f6e','#f5b731','#38bdf8','#10d988'][score - 1] || '#2a3356'
-  const label = ['','Weak','Fair','Good','Strong'][score]
-  if (!password) return null
+export const dynamic = 'force-dynamic'
+
+function strength(pw: string) {
+  const checks = [pw.length >= 8, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^a-zA-Z0-9]/.test(pw)]
+  return checks.filter(Boolean).length
+}
+
+function StrengthBar({ pw }: { pw: string }) {
+  if (!pw) return null
+  const score = strength(pw)
+  const colors = ['#f43f6e','#f5b731','#38bdf8','#10d988']
+  const labels = ['Weak','Fair','Good','Strong']
+  const c = colors[score - 1] || '#1a2035'
   return (
-    <div className="mt-2 space-y-1.5">
-      <div className="flex gap-1">
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display:'flex', gap:4, marginBottom:6 }}>
         {[1,2,3,4].map(i => (
-          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-            style={{ background: i <= score ? color : '#1a2035' }}/>
+          <div key={i} style={{ flex:1, height:3, borderRadius:4, background: i<=score ? c : '#1a2035', transition:'background 0.3s' }}/>
         ))}
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2 flex-wrap">
-          {checks.map(c => (
-            <span key={c.label} className="text-[10px] flex items-center gap-1"
-              style={{ color: c.ok ? '#10d988' : '#3a4a6a' }}>
-              {c.ok ? '✓' : '○'} {c.label}
-            </span>
-          ))}
-        </div>
-        {label && <span className="text-[11px] font-700" style={{ color }}>{label}</span>}
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap' as const }}>
+        {[['8+ chars', pw.length>=8],['Uppercase',/[A-Z]/.test(pw)],['Number',/[0-9]/.test(pw)],['Symbol',/[^a-zA-Z0-9]/.test(pw)]].map(([l, ok]) => (
+          <span key={l as string} style={{ fontSize:10, color: ok ? '#10d988' : '#3a4a6a' }}>{ok ? '✓' : '○'} {l}</span>
+        ))}
+        {labels[score-1] && <span style={{ fontSize:11, fontWeight:700, color:c, marginLeft:'auto' }}>{labels[score-1]}</span>}
       </div>
     </div>
   )
@@ -47,29 +38,28 @@ function ResetForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const token        = searchParams.get('token') || ''
-  const [phase,    setPhase]    = useState<'checking'|'valid'|'invalid'|'done'>('checking')
-  const [email,    setEmail]    = useState('')
-  const [pw,       setPw]       = useState('')
-  const [confirm,  setConfirm]  = useState('')
-  const [showPw,   setShowPw]   = useState(false)
-  const [showC,    setShowC]    = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
-  const [countdown,setCountdown]= useState(3)
+  const [phase, setPhase]       = useState<'checking'|'valid'|'invalid'|'done'>('checking')
+  const [email, setEmail]       = useState('')
+  const [pw, setPw]             = useState('')
+  const [confirm, setConfirm]   = useState('')
+  const [showPw, setShowPw]     = useState(false)
+  const [showC, setShowC]       = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
+  const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
     if (!token) { setPhase('invalid'); return }
-    fetch(`/api/auth/reset-password?token=${token}`)
+    fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
-      .then(d => { if (d.valid) { setPhase('valid'); setEmail(d.email) } else setPhase('invalid') })
+      .then(d => { if (d.valid) { setPhase('valid'); setEmail(d.email || '') } else setPhase('invalid') })
       .catch(() => setPhase('invalid'))
   }, [token])
 
-  // Countdown then redirect after success
   useEffect(() => {
     if (phase !== 'done') return
     const iv = setInterval(() => setCountdown(c => {
-      if (c <= 1) { clearInterval(iv); router.push('/account?tab=profile'); return 0 }
+      if (c <= 1) { clearInterval(iv); router.push('/auth/login?reset=1'); return 0 }
       return c - 1
     }), 1000)
     return () => clearInterval(iv)
@@ -78,178 +68,162 @@ function ResetForm() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (pw !== confirm)  { setError('Passwords do not match'); return }
-    if (pw.length < 8)   { setError('Minimum 8 characters'); return }
+    if (pw !== confirm) { setError('Passwords do not match'); return }
+    if (pw.length < 8)  { setError('Minimum 8 characters required'); return }
+    if (strength(pw) < 2) { setError('Please choose a stronger password'); return }
     setLoading(true)
     try {
       const res  = await fetch('/api/auth/reset-password', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body:   JSON.stringify({ token, password: pw }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ token, password: pw }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
       setPhase('done')
     } catch (e: any) { setError(e.message) }
     setLoading(false)
   }
 
+  const base: React.CSSProperties = {
+    minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+    padding:'80px 16px', background:'#080b14', fontFamily:'inherit',
+  }
+  const card: React.CSSProperties = {
+    background:'#0d1221', border:'1px solid #1e2640', borderRadius:20,
+    padding:'32px', width:'100%', maxWidth:420,
+  }
+  const inputStyle: React.CSSProperties = {
+    width:'100%', background:'#0a0f1e', border:'1px solid #1e2640', borderRadius:12,
+    padding:'12px 40px 12px 40px', color:'#e8edf8', fontSize:13, outline:'none', boxSizing:'border-box' as const,
+  }
+  const labelStyle: React.CSSProperties = { display:'block', fontSize:11, fontWeight:700, color:'#4a5a7a', textTransform:'uppercase' as const, letterSpacing:'0.1em', marginBottom:8 }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20">
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/3 w-64 h-64 rounded-full blur-[120px] opacity-15" style={{ background: '#8b5cf6' }}/>
-        <div className="absolute bottom-1/3 right-1/3 w-48 h-48 rounded-full blur-[90px] opacity-12" style={{ background: '#10d988' }}/>
-      </div>
+    <div style={base}>
+      {/* BG glows */}
+      <div style={{ position:'fixed', top:'30%', left:'30%', width:300, height:300, borderRadius:'50%', background:'rgba(139,92,246,0.08)', filter:'blur(100px)', pointerEvents:'none' }}/>
+      <div style={{ position:'fixed', bottom:'25%', right:'30%', width:250, height:250, borderRadius:'50%', background:'rgba(16,217,136,0.06)', filter:'blur(80px)', pointerEvents:'none' }}/>
 
-      <div className="w-full max-w-md relative">
+      <div style={{ width:'100%', maxWidth:420, position:'relative' }}>
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-5">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ background: 'linear-gradient(135deg,#10d988,#38bdf8)' }}>
-              <Zap size={18} className="text-black"/>
+        <div style={{ textAlign:'center', marginBottom:28 }}>
+          <Link href="/" style={{ display:'inline-flex', alignItems:'center', gap:8, textDecoration:'none', marginBottom:20 }}>
+            <div style={{ width:40, height:40, borderRadius:14, background:'linear-gradient(135deg,#10d988,#38bdf8)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Zap size={18} color="#080b14"/>
             </div>
-            <span className="font-display font-800 text-xl text-white">
-              Cortex<span style={{ color: '#10d988' }}>Cart</span>
-            </span>
+            <span style={{ fontWeight:900, fontSize:20, color:'#fff' }}>Cortex<span style={{ color:'#10d988' }}>Cart</span></span>
           </Link>
-          <h1 className="font-display font-800 text-3xl text-white mb-2">Set new password</h1>
-          <p className="text-[14px]" style={{ color: '#6b7fa3' }}>Secure your account with a strong password</p>
+          <h1 style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:6 }}>Reset Password</h1>
+          <p style={{ fontSize:13, color:'#6b7fa3' }}>Set a strong new password for your account</p>
         </div>
 
-        <div className="cx-card p-8">
-          <AnimatePresence mode="wait">
+        <div style={card}>
+          {/* CHECKING */}
+          {phase === 'checking' && (
+            <div style={{ textAlign:'center', padding:'40px 0' }}>
+              <Loader2 size={32} color="#10d988" style={{ animation:'spin 1s linear infinite', margin:'0 auto 12px' }}/>
+              <p style={{ color:'#6b7fa3', fontSize:13 }}>Verifying your reset link…</p>
+            </div>
+          )}
 
-            {/* Checking */}
-            {phase === 'checking' && (
-              <motion.div key="chk" initial={{ opacity:0 }} animate={{ opacity:1 }}
-                className="flex flex-col items-center py-10 gap-4">
-                <Loader2 size={32} className="animate-spin text-cx-emerald"/>
-                <p className="text-cx-muted text-[13px]">Verifying your link…</p>
-              </motion.div>
-            )}
+          {/* INVALID */}
+          {phase === 'invalid' && (
+            <div style={{ textAlign:'center' }}>
+              <div style={{ width:64, height:64, borderRadius:16, background:'rgba(244,63,110,0.12)', border:'1px solid rgba(244,63,110,0.25)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                <XCircle size={32} color="#f43f6e"/>
+              </div>
+              <h2 style={{ fontSize:18, fontWeight:800, color:'#fff', marginBottom:8 }}>Link expired or invalid</h2>
+              <p style={{ color:'#6b7fa3', fontSize:13, lineHeight:1.7, marginBottom:20 }}>
+                This reset link has been used or has expired (valid for 1 hour). Please request a new one.
+              </p>
+              <Link href="/auth/forgot-password" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'linear-gradient(135deg,#10d988,#0a9e62)', color:'#080b14', fontWeight:800, fontSize:13, padding:'12px 20px', borderRadius:12, textDecoration:'none', marginBottom:12 }}>
+                Request New Link
+              </Link>
+              <Link href="/auth/login" style={{ display:'block', fontSize:13, color:'#6b7fa3', textAlign:'center', textDecoration:'none' }}>← Back to sign in</Link>
+            </div>
+          )}
 
-            {/* Invalid */}
-            {phase === 'invalid' && (
-              <motion.div key="inv" initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }}
-                className="text-center py-4">
-                <div className="w-16 h-16 rounded-2xl bg-cx-rose/15 border border-cx-rose/25 flex items-center justify-center mx-auto mb-4">
-                  <XCircle size={32} className="text-cx-rose"/>
+          {/* VALID FORM */}
+          {phase === 'valid' && (
+            <div>
+              {email && (
+                <div style={{ background:'rgba(16,217,136,0.08)', border:'1px solid rgba(16,217,136,0.2)', borderRadius:10, padding:'10px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+                  <ShieldCheck size={14} color="#10d988"/>
+                  <span style={{ fontSize:12, color:'#10d988' }}>Resetting for: <strong>{email}</strong></span>
                 </div>
-                <h2 className="font-800 text-[18px] text-white mb-2">Link expired or invalid</h2>
-                <p className="text-cx-muted text-[13px] leading-relaxed mb-6">
-                  This reset link has been used or expired (valid for 1 hour). Request a new one.
-                </p>
-                <Link href="/auth/forgot-password"
-                  className="btn-em w-full py-3 text-[13px] rounded-xl flex items-center justify-center gap-2">
-                  Request New Link
-                </Link>
-                <Link href="/auth/login"
-                  className="block text-[13px] text-cx-muted hover:text-cx-text transition-colors mt-3 text-center">
-                  ← Back to sign in
-                </Link>
-              </motion.div>
-            )}
-
-            {/* Valid form */}
-            {phase === 'valid' && (
-              <motion.div key="form" initial={{ opacity:0 }} animate={{ opacity:1 }} className="space-y-4">
-                {email && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl text-[12px]"
-                    style={{ background:'rgba(16,217,136,0.08)', border:'1px solid rgba(16,217,136,0.2)', color:'#10d988' }}>
-                    <ShieldCheck size={13} className="flex-shrink-0"/>
-                    Resetting password for <strong className="truncate ml-1">{email}</strong>
+              )}
+              {error && (
+                <div style={{ background:'rgba(244,63,110,0.1)', border:'1px solid rgba(244,63,110,0.25)', borderRadius:10, padding:'10px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+                  <AlertCircle size={14} color="#f43f6e"/>
+                  <span style={{ fontSize:13, color:'#f43f6e' }}>{error}</span>
+                </div>
+              )}
+              <form onSubmit={submit}>
+                <div style={{ marginBottom:16 }}>
+                  <label style={labelStyle}>New Password</label>
+                  <div style={{ position:'relative' }}>
+                    <Lock size={14} color="#4a5a7a" style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)' }}/>
+                    <input type={showPw ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)}
+                      required placeholder="Create a strong password" style={inputStyle}/>
+                    <button type="button" onClick={() => setShowPw(!showPw)}
+                      style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#4a5a7a' }}>
+                      {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
+                    </button>
                   </div>
-                )}
+                  <StrengthBar pw={pw}/>
+                </div>
 
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl text-[13px] bg-cx-rose/10 border border-cx-rose/20 text-cx-rose">
-                    <AlertCircle size={14} className="flex-shrink-0"/> {error}
+                <div style={{ marginBottom:20 }}>
+                  <label style={labelStyle}>Confirm Password</label>
+                  <div style={{ position:'relative' }}>
+                    <Lock size={14} color="#4a5a7a" style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)' }}/>
+                    <input type={showC ? 'text' : 'password'} value={confirm} onChange={e => setConfirm(e.target.value)}
+                      required placeholder="Repeat your password" style={inputStyle}/>
+                    <button type="button" onClick={() => setShowC(!showC)}
+                      style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#4a5a7a' }}>
+                      {showC ? <EyeOff size={15}/> : <Eye size={15}/>}
+                    </button>
                   </div>
-                )}
+                  {confirm && (
+                    <p style={{ fontSize:11, marginTop:6, display:'flex', alignItems:'center', gap:4, color: pw===confirm ? '#10d988' : '#f43f6e' }}>
+                      {pw===confirm ? <><CheckCircle2 size={10}/> Passwords match</> : <><AlertCircle size={10}/> Passwords don't match</>}
+                    </p>
+                  )}
+                </div>
 
-                <form onSubmit={submit} className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted"/>
-                      <input type={showPw ? 'text' : 'password'} value={pw}
-                        onChange={e => setPw(e.target.value)} required
-                        placeholder="Create a strong password"
-                        className="cx-input w-full pl-10 pr-10 py-3 text-[13px]"/>
-                      <button type="button" onClick={() => setShowPw(!showPw)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-cx-muted hover:text-cx-text">
-                        {showPw ? <EyeOff size={15}/> : <Eye size={15}/>}
-                      </button>
-                    </div>
-                    <StrengthBar password={pw}/>
-                  </div>
+                <button type="submit" disabled={loading || pw !== confirm || pw.length < 8}
+                  style={{ width:'100%', background:'linear-gradient(135deg,#10d988,#0a9e62)', color:'#080b14', fontWeight:800, fontSize:14, padding:'13px', borderRadius:12, border:'none', cursor: (loading || pw!==confirm || pw.length<8) ? 'not-allowed' : 'pointer', opacity:(loading || pw!==confirm || pw.length<8) ? 0.5 : 1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                  {loading ? <><Loader2 size={15} style={{ animation:'spin 1s linear infinite' }}/> Updating…</> : <><ShieldCheck size={15}/> Set New Password</>}
+                </button>
+              </form>
+            </div>
+          )}
 
-                  <div>
-                    <label className="block text-[11px] font-700 text-cx-muted uppercase tracking-wider mb-2">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cx-muted"/>
-                      <input type={showC ? 'text' : 'password'} value={confirm}
-                        onChange={e => setConfirm(e.target.value)} required
-                        placeholder="Repeat your password"
-                        className="cx-input w-full pl-10 pr-10 py-3 text-[13px]"/>
-                      <button type="button" onClick={() => setShowC(!showC)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-cx-muted hover:text-cx-text">
-                        {showC ? <EyeOff size={15}/> : <Eye size={15}/>}
-                      </button>
-                    </div>
-                    {confirm && (
-                      <p className={cn('text-[11px] mt-1.5 flex items-center gap-1',
-                        pw === confirm ? 'text-cx-emerald' : 'text-cx-rose')}>
-                        {pw === confirm ? <><CheckCircle2 size={10}/> Passwords match</> : <><AlertCircle size={10}/> Passwords don't match</>}
-                      </p>
-                    )}
-                  </div>
-
-                  <button type="submit"
-                    disabled={loading || pw !== confirm || pw.length < 8}
-                    className="btn-em w-full py-3.5 text-[14px] rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
-                    {loading
-                      ? <><Loader2 size={15} className="animate-spin"/> Updating…</>
-                      : <><ShieldCheck size={15}/> Set New Password</>}
-                  </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* Success */}
-            {phase === 'done' && (
-              <motion.div key="ok" initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }}
-                className="text-center py-4">
-                <motion.div initial={{ scale:0 }} animate={{ scale:1 }}
-                  transition={{ type:'spring', damping:15 }}
-                  className="w-16 h-16 rounded-2xl bg-cx-emerald/15 border border-cx-emerald/25 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 size={32} className="text-cx-emerald"/>
-                </motion.div>
-                <h2 className="font-800 text-[20px] text-white mb-2">Password Updated! 🎉</h2>
-                <p className="text-cx-muted text-[13px] mb-1">Your password has been changed successfully.</p>
-                <p className="text-cx-muted text-[12px] mb-5">
-                  Redirecting to your profile in <strong className="text-cx-emerald">{countdown}s</strong>…
-                </p>
-                <Link href="/account?tab=profile"
-                  className="btn-em w-full py-3 text-[13px] rounded-xl flex items-center justify-center gap-2">
-                  Go to Profile Now →
-                </Link>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
+          {/* SUCCESS */}
+          {phase === 'done' && (
+            <div style={{ textAlign:'center' }}>
+              <div style={{ width:64, height:64, borderRadius:16, background:'rgba(16,217,136,0.12)', border:'1px solid rgba(16,217,136,0.25)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                <CheckCircle2 size={32} color="#10d988"/>
+              </div>
+              <h2 style={{ fontSize:22, fontWeight:800, color:'#fff', marginBottom:8 }}>Password Updated! 🎉</h2>
+              <p style={{ color:'#6b7fa3', fontSize:13, marginBottom:4 }}>Your password has been changed successfully.</p>
+              <p style={{ color:'#6b7fa3', fontSize:12, marginBottom:20 }}>
+                Redirecting to sign in in <strong style={{ color:'#10d988' }}>{countdown}s</strong>…
+              </p>
+              <Link href="/auth/login" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:'linear-gradient(135deg,#10d988,#0a9e62)', color:'#080b14', fontWeight:800, fontSize:13, padding:'12px 20px', borderRadius:12, textDecoration:'none' }}>
+                Sign In Now →
+              </Link>
+            </div>
+          )}
         </div>
 
-        <p className="text-center text-[12px] mt-4" style={{ color: '#3a4a6a' }}>
-          <Link href="/auth/login" className="text-cx-emerald hover:underline">← Back to sign in</Link>
+        <p style={{ textAlign:'center', fontSize:12, color:'#3a4a6a', marginTop:16 }}>
+          <Link href="/auth/login" style={{ color:'#10d988', textDecoration:'none' }}>← Back to sign in</Link>
           {' · '}
-          <Link href="/" className="text-cx-emerald hover:underline">Go to store</Link>
+          <Link href="/" style={{ color:'#10d988', textDecoration:'none' }}>Go to store</Link>
         </p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }
@@ -257,8 +231,9 @@ function ResetForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-cx-emerald"/>
+      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#080b14' }}>
+        <Loader2 size={24} color="#10d988" style={{ animation:'spin 1s linear infinite' }}/>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     }>
       <ResetForm/>
