@@ -622,8 +622,7 @@ export default function Dashboard() {
                               .slice(0,4)
                               .map(s=>(
                               <button key={s.val} onClick={()=>quickStatus(order.id,s.val)}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-700 transition-all hover:opacity-90"
-                                style={{background:`${s.bg.replace('bg-','').replace('/10','')?.split('-')[0]||'rgba(16,217,136'}`,border:`1px solid ${s.border}`,color:s.color.replace('text-','').split('-')[0]||'#c0cfe8'}}>
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-700 border transition-all hover:opacity-80 ${s.bg} ${s.color} ${s.border}`}>
                                 {s.emoji} → {s.label}
                               </button>
                             ))}

@@ -17,16 +17,21 @@ export function CustomCursor() {
     let rx = 0, ry = 0
     let visible = false
     let hovering = false
+    let pressed  = false
     let raf: number
 
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
     const tick = () => {
-      rx = lerp(rx, mx, 0.18)
-      ry = lerp(ry, my, 0.18)
+      // Faster follow speed for a snappier, less "laggy" feel
+      rx = lerp(rx, mx, 0.32)
+      ry = lerp(ry, my, 0.32)
 
-      dot.style.transform  = `translate3d(${mx - 3}px,${my - 3}px,0)`
-      ring.style.transform = `translate3d(${rx - (hovering ? 22 : 16)}px,${ry - (hovering ? 22 : 16)}px,0)`
+      const dotScale  = pressed ? 1.8 : 1
+      const ringScale = pressed ? 0.8 : 1
+
+      dot.style.transform  = `translate3d(${mx - 3}px,${my - 3}px,0) scale(${dotScale})`
+      ring.style.transform = `translate3d(${rx - (hovering ? 22 : 16)}px,${ry - (hovering ? 22 : 16)}px,0) scale(${ringScale})`
       glow.style.transform = `translate3d(${rx - 40}px,${ry - 40}px,0)`
 
       raf = requestAnimationFrame(tick)
@@ -59,11 +64,11 @@ export function CustomCursor() {
       ring.style.background  = isClickable ? 'rgba(16,217,136,0.06)' : 'transparent'
     }
     const onDown = () => {
-      dot.style.transform = dot.style.transform + ' scale(1.8)'
-      ring.style.transform = ring.style.transform + ' scale(0.8)'
+      pressed = true
       ring.style.background = 'rgba(16,217,136,0.15)'
     }
     const onUp = () => {
+      pressed = false
       ring.style.background = hovering ? 'rgba(16,217,136,0.06)' : 'transparent'
     }
 

@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { ShoppingCart, Search, Menu, X, Zap, ChevronDown, Heart, User, LogOut, Settings, Package, Bell, Home, Cpu, Gamepad2, Watch, Monitor, Camera, Headphones, Sparkles, LayoutGrid } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, Zap, ChevronDown, Heart, User, LogOut, Settings, Package, Bell, Home, Cpu, Gamepad2, Watch, Monitor, Camera, Headphones, Sparkles, LayoutGrid, Truck, Tag } from 'lucide-react'
 import { useCartStore }     from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { ClientOnly }       from '@/components/ClientOnly'
 import { NotificationBell } from '@/components/NotificationBell'
 import { cn, initials }     from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 
 const CATEGORIES = [
   { label:'Tech',    href:'/products?category=tech',    icon:Cpu,        color:'text-cx-sky'     },
@@ -35,7 +36,7 @@ const NAV_LINKS = [
   { label:'Contact',  href:'/contact' },
 ]
 
-const ANNOUNCEMENT_VERSION = 'v4'
+const ANNOUNCEMENT_VERSION = 'v5'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -104,14 +105,45 @@ export function Navbar() {
   const wishlistCount= useWishlistStore(s => s.items.length)
   const isActive     = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0] as string)
 
+  const grabCoupon = (code: string) => {
+    const cart = useCartStore.getState()
+    if (cart.items.length > 0) {
+      const result = cart.applyCoupon(code)
+      if (result.success) {
+        toast.success(`🎉 ${code} applied — ${result.message}`)
+        cart.setCartOpen(true)
+      } else {
+        toast.error(result.message)
+      }
+    } else {
+      navigator.clipboard?.writeText(code).catch(() => {})
+      toast.success(`📋 Code "${code}" copied! Add items to your cart, then paste it at checkout.`)
+    }
+  }
+
   return (
     <>
-      {/* Announcement bar */}
+      {/* Announcement bar — live coupon promo */}
       {!barDismissed && (
-        <div className="relative z-50 bg-gradient-to-r from-cx-emerald/90 via-cx-violet/80 to-cx-sky/90 text-cx-bg text-[11px] font-700 py-2 px-4 text-center">
-          <span>✨ New: AI-powered Batch Recommendations — <Link href="/batch" className="underline hover:no-underline">Try it free →</Link></span>
+        <div className="relative z-50 bg-gradient-to-r from-cx-emerald/90 via-cx-violet/80 to-cx-sky/90 text-cx-bg text-[11px] font-700 py-2 px-10 sm:px-12">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-x-2 gap-y-1 flex-wrap text-center">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <Truck size={12}/> Free shipping on orders over $99
+            </span>
+            <span className="opacity-50 hidden sm:inline">·</span>
+            <span className="hidden sm:inline opacity-80">Use code</span>
+            <button onClick={() => grabCoupon('CORTEX10')} title="Click to apply or copy"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cx-bg/15 hover:bg-cx-bg/25 font-800 tracking-wide transition-colors cursor-pointer">
+              <Tag size={10}/> CORTEX10 <span className="opacity-80 font-600">— 10% off</span>
+            </button>
+            <span className="opacity-50">·</span>
+            <button onClick={() => grabCoupon('FIRST15')} title="Click to apply or copy"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cx-bg/15 hover:bg-cx-bg/25 font-800 tracking-wide transition-colors cursor-pointer">
+              <Tag size={10}/> FIRST15 <span className="opacity-80 font-600 hidden sm:inline">— 15% off your first order</span><span className="opacity-80 font-600 sm:hidden">— 15% off</span>
+            </button>
+          </div>
           <button onClick={() => { localStorage.setItem(`cx-bar-dismissed-${ANNOUNCEMENT_VERSION}`,'1'); setBarDismissed(true) }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"><X size={13}/></button>
+            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"><X size={13}/></button>
         </div>
       )}
 

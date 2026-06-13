@@ -185,22 +185,18 @@ export function ProductFilters({ categories, currentParams }: Props) {
         open={sections.includes('quick')} onToggle={()=>toggle('quick')}>
         <div className="space-y-0.5">
           {[
-            { label:'⭐ Featured Picks', key:'featured', val:'true', color:'cx-sky'    },
-            { label:'🔥 On Sale / Deals', key:'deals',    val:'true', color:'cx-rose'   },
-            { label:'✅ In Stock Only',   key:'inStock',  val:'true', color:'cx-emerald'},
+            { label:'⭐ Featured Picks', key:'featured', val:'true', classes:'bg-cx-sky/12 text-cx-sky border-cx-sky/20'        },
+            { label:'🔥 On Sale / Deals', key:'deals',    val:'true', classes:'bg-cx-rose/12 text-cx-rose border-cx-rose/20'      },
+            { label:'✅ In Stock Only',   key:'inStock',  val:'true', classes:'bg-cx-emerald/12 text-cx-emerald border-cx-emerald/20' },
           ].map(f => {
             const active = currentParams[f.key] === f.val
             return (
               <button key={f.key}
                 onClick={() => set(f.key, active ? null : f.val)}
-                className={cn('w-full text-left px-3 py-2.5 rounded-xl text-[12px] font-600 transition-all flex items-center gap-2',
-                  active ? `text-${f.color} border`
-                         : 'text-cx-muted hover:text-cx-text hover:bg-white/4'
-                )}
-                style={active ? {
-                  background:`rgba(var(--${f.color.replace('cx-','cx-')}-rgb,16,217,136),0.1)`,
-                  borderColor:`rgba(16,217,136,0.2)`
-                } : {}}>
+                className={cn('w-full text-left px-3 py-2.5 rounded-xl text-[12px] font-600 transition-all flex items-center gap-2 border',
+                  active ? f.classes
+                         : 'text-cx-muted border-transparent hover:text-cx-text hover:bg-white/4'
+                )}>
                 <span className="flex-1">{f.label}</span>
                 {active && <Check size={11}/>}
               </button>
