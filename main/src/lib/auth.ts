@@ -45,12 +45,11 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async signIn({ user }) {
-      // Send login success email (fire-and-forget)
+      // Send login success email (fire-and-forget — never blocks sign-in)
       if (user?.email) {
-        try {
-          const { sendLoginSuccessEmail } = await import('@/lib/email')
-          await sendLoginSuccessEmail(user.email, { name: user.name || 'there' })
-        } catch {}
+        import('@/lib/email')
+          .then(({ sendLoginSuccessEmail }) => sendLoginSuccessEmail(user.email!, { name: user.name || 'there' }))
+          .catch(err => console.error('[LOGIN EMAIL]', err?.message || err))
       }
       return true
     },

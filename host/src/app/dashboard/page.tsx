@@ -179,7 +179,13 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      toast.success('✅ Order updated! Customer notified by email.')
+      if (data.emailSent) {
+        toast.success('✅ Order updated! Customer notified by email.')
+      } else if (data.emailError) {
+        toast.error(`Order updated, but email failed: ${data.emailError}`, { duration: 6000 })
+      } else {
+        toast.success('✅ Order updated.')
+      }
       setEditing(null)
       fetchOrders(true)
       fetchAllOrders()
@@ -193,9 +199,16 @@ export default function Dashboard() {
         method:'PATCH', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ orderId, status }),
       })
-      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
       const s = STATUS_MAP[status]
-      toast.success(`${s?.emoji} Status → ${s?.label}. Email sent.`)
+      if (data.emailSent) {
+        toast.success(`${s?.emoji} Status → ${s?.label}. Email sent.`)
+      } else if (data.emailError) {
+        toast.error(`Status → ${s?.label}, but email failed: ${data.emailError}`, { duration: 6000 })
+      } else {
+        toast.success(`${s?.emoji} Status → ${s?.label}.`)
+      }
       fetchOrders(true)
       fetchAllOrders()
     } catch { toast.error('Update failed') }

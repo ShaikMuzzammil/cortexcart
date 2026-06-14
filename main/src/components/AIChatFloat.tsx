@@ -95,7 +95,7 @@ export function AIChatFloat() {
               <p className="text-[13px] font-800 text-white">CortexCart AI</p>
               <p className="text-[10px] text-cx-emerald flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-cx-emerald inline-block animate-pulse"/>
-                Online · Powered by Claude
+                Online · Neural Engine Active
               </p>
             </div>
             <button onClick={() => setMinimized(!minimized)} className="text-cx-muted hover:text-cx-dim p-1 rounded-lg hover:bg-cx-card transition-all">
@@ -176,19 +176,17 @@ export function AIChatFloat() {
                 <div ref={endRef}/>
               </div>
 
-              {/* Quick chips */}
-              {msgs.length <= 2 && (
-                <div className="px-3 py-2 border-t border-cx-border/50">
-                  <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1">
-                    {CHIPS.map(chip => (
-                      <button key={chip} onClick={() => send(chip)}
-                        className="flex-shrink-0 text-[10px] font-600 px-2.5 py-1 rounded-full bg-cx-violet/10 text-cx-violet border border-cx-violet/20 hover:bg-cx-violet/20 transition-all whitespace-nowrap">
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
+              {/* Quick chips — always visible for fast follow-up searches */}
+              <div className="px-3 py-2 border-t border-cx-border/50">
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1">
+                  {CHIPS.map(chip => (
+                    <button key={chip} onClick={() => send(chip)}
+                      className="flex-shrink-0 text-[10px] font-600 px-2.5 py-1 rounded-full bg-cx-violet/10 text-cx-violet border border-cx-violet/20 hover:bg-cx-violet/20 transition-all whitespace-nowrap">
+                      {chip}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* Input */}
               <div className="p-3 border-t border-cx-border flex-shrink-0">

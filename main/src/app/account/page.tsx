@@ -105,11 +105,6 @@ export default function AccountPage() {
               <t.icon size={14} /> {t.label}
             </button>
           ))}
-          {user.role === 'ADMIN' && (
-            <Link href="/admin" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-700 text-cx-violet hover:bg-cx-violet/10 transition-all">
-              <Zap size={14} /> Admin Panel
-            </Link>
-          )}
           <button onClick={() => signOut({ callbackUrl: '/' })}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-700 text-cx-rose hover:bg-cx-rose/10 transition-all ml-auto">
             <LogOut size={14} /> Sign Out

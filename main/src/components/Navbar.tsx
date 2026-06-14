@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { ShoppingCart, Search, Menu, X, Zap, ChevronDown, Heart, User, LogOut, Settings, Package, Bell, Home, Cpu, Gamepad2, Watch, Monitor, Camera, Headphones, Sparkles, LayoutGrid, Truck, Tag } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, Zap, ChevronDown, Heart, User, LogOut, Package, Bell, Home, Cpu, Gamepad2, Watch, Monitor, Camera, Headphones, Sparkles, LayoutGrid, Truck, Tag } from 'lucide-react'
 import { useCartStore }     from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { ClientOnly }       from '@/components/ClientOnly'
@@ -303,7 +303,6 @@ export function Navbar() {
                           { href:'/account', icon:User, label:'My Account' },
                           { href:'/orders', icon:Package, label:'My Orders' },
                           { href:'/wishlist', icon:Heart, label:'Wishlist' },
-                          ...((session.user as any)?.role === 'ADMIN' ? [{ href:'/admin', icon:Settings, label:'Admin' }] : []),
                         ].map(item => (
                           <Link key={item.href} href={item.href}
                             className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-cx-card transition-all">

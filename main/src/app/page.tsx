@@ -4,13 +4,13 @@ import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { ProductCard } from '@/components/ProductCard'
 import { formatPrice } from '@/lib/utils'
-import { ArrowRight, Zap, Brain, TrendingUp, Shield, Sparkles, ChevronRight, Star, Package, Award, Cpu, Watch, Headphones, Monitor, Camera, Gamepad2, BadgeCheck, Truck, RotateCcw, MessageCircle } from 'lucide-react'
+import { ArrowRight, Zap, Brain, TrendingUp, Shield, Sparkles, ChevronRight, Star, Package, Award, Cpu, Watch, Headphones, Monitor, Camera, Gamepad2, BadgeCheck, Truck, RotateCcw, MessageCircle, Shirt, Dumbbell, Briefcase, Music2, Plane, BookOpen, UtensilsCrossed, PawPrint, Home } from 'lucide-react'
 
 async function getData() {
   const [featured, newArrivals, categories, productCount, orderCount] = await Promise.all([
     prisma.product.findMany({ where:{ isActive:true, isFeatured:true }, include:{ category:true }, take:6, orderBy:{ reviewCount:'desc' } }),
     prisma.product.findMany({ where:{ isActive:true }, include:{ category:true }, take:4, orderBy:{ createdAt:'desc' } }),
-    prisma.category.findMany({ take:6, orderBy:{ name:'asc' } }),
+    prisma.category.findMany({ take:17, orderBy:{ name:'asc' } }),
     prisma.product.count({ where:{ isActive:true } }),
     prisma.order.count(),
   ])
@@ -25,12 +25,23 @@ const FEATURES = [
 ]
 
 const CAT_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
-  electronics: { icon:Cpu,       color:'text-cx-sky',     bg:'bg-cx-sky/8' },
-  wearables:   { icon:Watch,     color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
-  audio:       { icon:Headphones,color:'text-cx-violet',  bg:'bg-cx-violet/8' },
-  computing:   { icon:Monitor,   color:'text-cx-gold',    bg:'bg-cx-gold/8' },
-  photography: { icon:Camera,    color:'text-cx-rose',    bg:'bg-cx-rose/8' },
-  gaming:      { icon:Gamepad2,  color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
+  electronics: { icon:Cpu,             color:'text-cx-sky',     bg:'bg-cx-sky/8' },
+  wearables:   { icon:Watch,           color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
+  audio:       { icon:Headphones,      color:'text-cx-violet',  bg:'bg-cx-violet/8' },
+  computing:   { icon:Monitor,         color:'text-cx-gold',    bg:'bg-cx-gold/8' },
+  photography: { icon:Camera,          color:'text-cx-rose',    bg:'bg-cx-rose/8' },
+  gaming:      { icon:Gamepad2,        color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
+  tech:        { icon:Cpu,             color:'text-cx-sky',     bg:'bg-cx-sky/8' },
+  fashion:     { icon:Shirt,           color:'text-cx-rose',    bg:'bg-cx-rose/8' },
+  beauty:      { icon:Sparkles,        color:'text-cx-gold',    bg:'bg-cx-gold/8' },
+  sports:      { icon:Dumbbell,        color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
+  office:      { icon:Briefcase,       color:'text-cx-violet',  bg:'bg-cx-violet/8' },
+  music:       { icon:Music2,          color:'text-cx-sky',     bg:'bg-cx-sky/8' },
+  travel:      { icon:Plane,           color:'text-cx-gold',    bg:'bg-cx-gold/8' },
+  books:       { icon:BookOpen,        color:'text-cx-rose',    bg:'bg-cx-rose/8' },
+  kitchen:     { icon:UtensilsCrossed, color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
+  pets:        { icon:PawPrint,        color:'text-cx-violet',  bg:'bg-cx-violet/8' },
+  home:        { icon:Home,            color:'text-cx-sky',     bg:'bg-cx-sky/8' },
 }
 
 const TESTIMONIALS = [
@@ -244,48 +255,97 @@ export default async function HomePage() {
               Shopping, <span className="grad-multi">Reimagined</span>
             </h2>
             <p className="text-cx-dim text-[15px] max-w-2xl mx-auto">
-              We combined cutting-edge AI with a curated catalog across 12 categories — 
+              We combined cutting-edge AI with a curated catalog across 17 categories — 
               so you always find exactly what you need, at the best price.
             </p>
           </div>
 
-          {/* Comparison table */}
-          <div className="overflow-x-auto mb-16">
-            <div className="min-w-[640px]">
-              <div className="grid grid-cols-4 gap-0 rounded-2xl overflow-hidden border border-cx-border">
-                {/* Header */}
-                <div className="bg-cx-surface px-5 py-4 text-[11px] font-700 text-cx-muted uppercase tracking-wider">Feature</div>
+          {/* Wave-styled advantage showcase */}
+          <div className="relative mb-16 rounded-3xl overflow-hidden border border-cx-border">
+            <div className="absolute inset-0 bg-gradient-to-br from-cx-emerald/8 via-cx-bg to-cx-violet/10" />
+            <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full blur-[100px] bg-cx-emerald/15 animate-pulse-soft" />
+            <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full blur-[100px] bg-cx-violet/15 animate-pulse-soft" style={{animationDelay:'1.5s'}} />
+
+            {/* Animated wave divider (top) */}
+            <svg className="absolute top-0 left-0 w-full opacity-30" viewBox="0 0 1200 60" preserveAspectRatio="none" style={{height:60}}>
+              <path d="M0,30 C150,60 350,0 600,30 C850,60 1050,0 1200,30 L1200,0 L0,0 Z" fill="url(#waveGrad)">
+                <animate attributeName="d" dur="8s" repeatCount="indefinite"
+                  values="M0,30 C150,60 350,0 600,30 C850,60 1050,0 1200,30 L1200,0 L0,0 Z;
+                          M0,20 C150,0 350,60 600,20 C850,0 1050,60 1200,20 L1200,0 L0,0 Z;
+                          M0,30 C150,60 350,0 600,30 C850,60 1050,0 1200,30 L1200,0 L0,0 Z"/>
+              </path>
+              <defs>
+                <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#10d988"/>
+                  <stop offset="100%" stopColor="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <div className="relative px-6 sm:px-10 py-14">
+              <div className="text-center mb-10">
+                <span className="badge-vio mb-3 inline-block">The CortexCart Advantage</span>
+                <h3 className="font-display font-800 text-2xl sm:text-3xl text-white mt-3">
+                  Built different — <span className="grad-multi">on purpose</span>
+                </h3>
+                <p className="text-cx-dim text-[14px] max-w-2xl mx-auto mt-3">
+                  Every part of CortexCart was designed around one question: how do we get you to the right product, faster — without the noise, fake reviews, or data-selling that plagues big marketplaces.
+                </p>
+              </div>
+
+              {/* Animated stat counters */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
                 {[
-                  { name:'CortexCart', color:'text-cx-emerald', bg:'bg-cx-emerald/8 border-r border-l border-cx-emerald/20' },
-                  { name:'Amazon',     color:'text-cx-dim',     bg:'bg-cx-surface' },
-                  { name:'Flipkart',   color:'text-cx-dim',     bg:'bg-cx-surface' },
-                ].map(store => (
-                  <div key={store.name} className={`${store.bg} px-5 py-4 text-center`}>
-                    <span className={`text-[13px] font-800 ${store.color}`}>{store.name}</span>
-                    {store.name === 'CortexCart' && <span className="ml-2 text-[9px] bg-cx-emerald/20 text-cx-emerald px-2 py-0.5 rounded-full font-700 uppercase">You're here</span>}
-                  </div>
-                ))}
-                {[
-                  ['AI Product Matching',    '✦ Neural engine',  '✗ Keyword only',  '✗ Basic search'],
-                  ['Batch Recommendations',  '✦ CSV/TXT upload', '✗ Not available', '✗ Not available'],
-                  ['Real-time Price Alerts', '✦ Automated',      '~ Manual wishlist','~ Manual'],
-                  ['No Fake Reviews',        '✦ Verified only',  '✗ Mixed quality', '~ Partial'],
-                  ['Order Tracking Live',    '✦ Step-by-step',   '~ Basic',         '~ Basic'],
-                  ['24/7 AI Support',        '✦ Instant',        '~ Bot + wait',    '~ Limited'],
-                  ['12 Product Categories',  '✦ Curated',        '✦ Vast',          '✦ Large'],
-                  ['Privacy First',          '✦ Zero data sell', '✗ Ad-data',       '~ Partial'],
-                ].map(([feat, cx, am, fk], i) => (
-                  <div key={feat} className={`contents`}>
-                    <div className={`px-5 py-3.5 text-[12px] font-600 text-cx-dim ${i%2===0?'bg-cx-bg/30':''} border-t border-cx-border/30`}>{feat}</div>
-                    {[cx, am, fk].map((val, vi) => (
-                      <div key={vi} className={`px-5 py-3.5 text-center text-[12px] ${i%2===0?'bg-cx-bg/30':''} border-t border-cx-border/30 ${vi===0?'border-r border-l border-cx-emerald/10 bg-cx-emerald/4':''}`}>
-                        <span className={val.startsWith('✦')?'text-cx-emerald font-700':val.startsWith('~')?'text-cx-gold':'text-cx-muted'}>{val}</span>
-                      </div>
-                    ))}
+                  { val:'17',    label:'Curated Categories', icon:'🏪', color:'text-cx-emerald' },
+                  { val:'158+',  label:'Hand-picked Products', icon:'📦', color:'text-cx-violet' },
+                  { val:'<1s',   label:'AI Match Speed', icon:'⚡', color:'text-cx-sky' },
+                  { val:'0',     label:'Data Sold, Ever', icon:'🔒', color:'text-cx-gold' },
+                ].map((s, i) => (
+                  <div key={s.label} className="text-center p-5 rounded-2xl glass border border-cx-border/60 hover:-translate-y-1 transition-transform duration-300"
+                    style={{animationDelay:`${i*0.1}s`}}>
+                    <div className="text-2xl mb-1">{s.icon}</div>
+                    <div className={`font-display font-900 text-3xl ${s.color}`}>{s.val}</div>
+                    <div className="text-[11px] text-cx-muted uppercase tracking-wide mt-1">{s.label}</div>
                   </div>
                 ))}
               </div>
+
+              {/* Wave-flow advantage timeline */}
+              <div className="relative">
+                <div className="hidden sm:block absolute top-7 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cx-border to-transparent" />
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+                  {[
+                    { step:'01', title:'Tell the AI what you need', desc:'Natural language search — no filters required', icon:Brain,
+                      iconWrap:'bg-cx-violet/10 border-cx-violet/30', iconColor:'text-cx-violet', stepColor:'text-cx-violet' },
+                    { step:'02', title:'Instant neural matching', desc:'Our engine scans the live catalog in real time', icon:Sparkles,
+                      iconWrap:'bg-cx-emerald/10 border-cx-emerald/30', iconColor:'text-cx-emerald', stepColor:'text-cx-emerald' },
+                    { step:'03', title:'Transparent, verified results', desc:'Real stock, real prices, real reviews only', icon:BadgeCheck,
+                      iconWrap:'bg-cx-sky/10 border-cx-sky/30', iconColor:'text-cx-sky', stepColor:'text-cx-sky' },
+                    { step:'04', title:'Track every step home', desc:'Live order timeline from checkout to doorstep', icon:Truck,
+                      iconWrap:'bg-cx-gold/10 border-cx-gold/30', iconColor:'text-cx-gold', stepColor:'text-cx-gold' },
+                  ].map(item => (
+                    <div key={item.step} className="relative text-center sm:text-left">
+                      <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mx-auto sm:mx-0 mb-3 relative z-10 bg-cx-bg ${item.iconWrap}`}>
+                        <item.icon size={22} className={item.iconColor} />
+                      </div>
+                      <span className={`text-[11px] font-800 tracking-widest ${item.stepColor}`}>STEP {item.step}</span>
+                      <h4 className="text-[14px] font-700 text-white mt-1 mb-1">{item.title}</h4>
+                      <p className="text-[12px] text-cx-muted leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Animated wave divider (bottom) */}
+            <svg className="absolute bottom-0 left-0 w-full opacity-20 rotate-180" viewBox="0 0 1200 60" preserveAspectRatio="none" style={{height:60}}>
+              <path d="M0,30 C150,0 350,60 600,30 C850,0 1050,60 1200,30 L1200,60 L0,60 Z" fill="url(#waveGrad)">
+                <animate attributeName="d" dur="10s" repeatCount="indefinite"
+                  values="M0,30 C150,0 350,60 600,30 C850,0 1050,60 1200,30 L1200,60 L0,60 Z;
+                          M0,20 C150,60 350,0 600,20 C850,60 1050,0 1200,20 L1200,60 L0,60 Z;
+                          M0,30 C150,0 350,60 600,30 C850,0 1050,60 1200,30 L1200,60 L0,60 Z"/>
+              </path>
+            </svg>
           </div>
 
           {/* Key advantages */}
@@ -299,8 +359,8 @@ export default async function HomePage() {
                 desc:'Track any order with a 5-step visual timeline. From placement to delivery — every status update is pushed in real-time.' },
               { title:'Verified Reviews Only', icon:'✅', color:'border-cx-gold/20 bg-cx-gold/4', textColor:'text-cx-gold',
                 desc:'Every review is linked to a verified purchase. No fake reviews, no paid rankings — just genuine feedback from real buyers.' },
-              { title:'12 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
-                desc:'From Tech to Pets, Office to Kitchen — 119+ hand-curated products across 12 distinct categories, each with expert-picked recommendations.' },
+              { title:'17 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
+                desc:'From Audio to Pets, Computing to Kitchen — 158+ hand-curated products across 17 distinct categories, each with expert-picked recommendations.' },
               { title:'Privacy First', icon:'🔒', color:'border-cx-sky/20 bg-cx-sky/4', textColor:'text-cx-sky',
                 desc:'We never sell your data to advertisers. Your shopping history, preferences, and personal info stay completely private and secure.' },
             ].map(adv => (
@@ -441,7 +501,7 @@ export default async function HomePage() {
               <p className="text-[12px] text-cx-muted leading-relaxed">AI-powered commerce for the modern shopper. Smart, fast, personalized.</p>
             </div>
             {[
-              { h:'Shop',    links:[['All Products','/products'],['Electronics','/products?category=electronics'],['Wearables','/products?category=wearables'],['Audio','/products?category=audio'],['Gaming','/products?category=gaming']] },
+              { h:'Shop',    links:[['All Products','/products'],['Audio','/products?category=audio'],['Computing','/products?category=computing'],['Wearables','/products?category=wearables'],['Gaming','/products?category=gaming']] },
               { h:'Company', links:[['About','/about'],['Blog','/blog'],['Careers','/careers'],['Contact','/contact']] },
               { h:'Support', links:[['FAQ','/faq'],['Shipping','/shipping'],['Returns','/returns'],['Track Order','/orders'],['Privacy','/privacy']] },
             ].map(col => (

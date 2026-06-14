@@ -1,9 +1,64 @@
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM   = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
 const TO     = process.env.CONTACT_EMAIL_TO || 'admin@cortexcart.com'
 const APP    = process.env.NEXT_PUBLIC_APP_URL || 'https://cortexcart.vercel.app'
+
+// ── Safe "from" address ─────────────────────────────────────────────────────
+// Resend REJECTS sends where the "from" domain isn't verified on the account
+// (e.g. RESEND_FROM_EMAIL accidentally set to something@gmail.com). Since
+// gmail.com / outlook.com / yahoo.com / hotmail.com can never be verified by
+// this app, silently fall back to Resend's built-in test sender so emails
+// still go out — and log a warning so the real fix (verify a custom domain
+// at resend.com/domains) is visible in the deploy logs.
+const UNVERIFIABLE_DOMAINS = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'live.com']
+function resolveFrom(): string {
+  const raw = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
+  const match = raw.match(/<([^>]+)>/) || raw.match(/([^\s<>]+@[^\s<>]+)/)
+  const addr  = (match?.[1] || raw).toLowerCase()
+  const domain = addr.split('@')[1]
+  if (domain && UNVERIFIABLE_DOMAINS.includes(domain)) {
+    console.warn(`[EMAIL] RESEND_FROM_EMAIL uses "${domain}", which can never be verified on Resend. ` +
+      `Falling back to onboarding@resend.dev. Add and verify your own domain at https://resend.com/domains, ` +
+      `then update RESEND_FROM_EMAIL.`)
+    return 'CortexCart <onboarding@resend.dev>'
+  }
+  return raw
+}
+const FROM = resolveFrom()
+
+// Turn a raw Resend/network error into a short, admin-actionable message.
+function friendlyError(err: any): string {
+  const msg = err?.message || String(err)
+  if (/not verified/i.test(msg) && /domain/i.test(msg)) {
+    return `Sender domain not verified on Resend. Verify a domain at resend.com/domains, then set RESEND_FROM_EMAIL to an address on that domain. (${msg})`
+  }
+  if (/API key/i.test(msg)) {
+    return `Resend API key missing or invalid. Set RESEND_API_KEY in your environment. (${msg})`
+  }
+  return msg || 'Email send failed'
+}
+
+// Shared send wrapper — every email function below routes through this so
+// Resend API errors (e.g. unverified domain, bad recipient) are ALWAYS
+// surfaced to the caller instead of silently disappearing.
+async function sendMail(opts: { to: string | string[]; subject: string; html: string; replyTo?: string }) {
+  let result
+  try {
+    result = await resend.emails.send({
+      from: FROM, to: opts.to, subject: opts.subject, html: opts.html,
+      ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    })
+  } catch (err) {
+    console.error('[EMAIL ERROR]', err)
+    throw new Error(friendlyError(err))
+  }
+  if (result.error) {
+    console.error('[EMAIL ERROR]', result.error)
+    throw new Error(friendlyError(result.error))
+  }
+  return result
+}
 
 const css = `
 body{margin:0;padding:0;background:#080b14;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#e8edf8;}
@@ -94,8 +149,9 @@ function wrap(content: string) {
 // ─── CONTACT EMAIL ─────────────────────────────────────────────────────────
 export async function sendContactEmail(data: { name:string; email:string; subject:string; message:string; category:string; priority:string }) {
   const priorityColor = data.priority === 'urgent' ? 'badge-rose' : data.priority === 'high' ? 'badge-gold' : 'badge'
-  await resend.emails.send({
-    from: FROM, to: TO,
+  await sendMail({
+    to: TO,
+    replyTo: data.email,
     subject: `[CortexCart] [${data.priority.toUpperCase()}] ${data.subject}`,
     html: wrap(`
       ${header('New Contact Message', `${data.category} inquiry`)}
@@ -116,8 +172,8 @@ export async function sendContactEmail(data: { name:string; email:string; subjec
       </div>`)
   })
 
-  return resend.emails.send({
-    from: FROM, to: data.email,
+  return sendMail({
+    to: data.email,
     subject: `✅ Message received — CortexCart Support`,
     html: wrap(`
       ${header('Message Received ✅', "We'll respond within 24–48 hours")}
@@ -165,8 +221,8 @@ export async function sendOrderConfirmationEmail(to: string, data: {
   const addr = data.shippingAddress
   const paymentBadge = data.paymentMethod === 'cod' ? '<span class="badge-gold">Cash on Delivery</span>' : '<span class="badge">Online Payment</span>'
 
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `✅ Order Confirmed #${data.orderNumber.slice(-8).toUpperCase()} — CortexCart`,
     html: wrap(`
       ${header('Order Confirmed! 🎉', `Order #${data.orderNumber.slice(-8).toUpperCase()}`)}
@@ -244,8 +300,8 @@ export async function sendOrderConfirmationEmail(to: string, data: {
 
 // ─── WELCOME EMAIL ──────────────────────────────────────────────────────────
 export async function sendWelcomeEmail(to: string, name: string) {
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `Welcome to CortexCart, ${name}! 🎉`,
     html: wrap(`
       ${header(`Welcome, ${name}! 🎉`, 'Your AI-powered shopping journey begins')}
@@ -269,8 +325,8 @@ export async function sendWelcomeEmail(to: string, name: string) {
 
 // ─── SHIPPING UPDATE EMAIL ──────────────────────────────────────────────────
 export async function sendShippingEmail(to: string, data: { customerName:string; orderNumber:string; trackingNumber:string; carrier:string; estimatedDelivery:string; items:any[] }) {
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `🚚 Your order #${data.orderNumber.slice(-8).toUpperCase()} has shipped!`,
     html: wrap(`
       ${header('Your Order Has Shipped! 🚚', `Order #${data.orderNumber.slice(-8).toUpperCase()}`)}
@@ -292,8 +348,8 @@ export async function sendShippingEmail(to: string, data: { customerName:string;
 
 // ─── OUT FOR DELIVERY ───────────────────────────────────────────────────────
 export async function sendOutForDeliveryEmail(to: string, data: { customerName:string; orderNumber:string; estimatedWindow:string }) {
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `📦 Out for Delivery Today — Order #${data.orderNumber.slice(-8).toUpperCase()}`,
     html: wrap(`
       ${header('Out for Delivery! 📦', 'Your order arrives today')}
@@ -315,8 +371,8 @@ export async function sendOutForDeliveryEmail(to: string, data: { customerName:s
 
 // ─── DELIVERY CONFIRMATION ──────────────────────────────────────────────────
 export async function sendDeliveredEmail(to: string, data: { customerName:string; orderNumber:string; items:any[]; total:number }) {
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `✅ Delivered! Order #${data.orderNumber.slice(-8).toUpperCase()} — How was it?`,
     html: wrap(`
       ${header('Your Order is Delivered! ✅', 'We hope you love it!')}
@@ -345,24 +401,44 @@ export async function sendDeliveredEmail(to: string, data: { customerName:string
 }
 
 // ─── ADMIN NEW ORDER ALERT ──────────────────────────────────────────────────
-export async function sendAdminNewOrderAlert(data: { orderNumber:string; customerName:string; customerEmail:string; total:number; itemCount:number; paymentMethod:string; items:any[] }) {
-  await resend.emails.send({
-    from: FROM, to: TO,
+export async function sendAdminNewOrderAlert(data: { orderNumber:string; customerName:string; customerEmail:string; total:number; itemCount:number; paymentMethod:string; items:any[]; shippingAddress?: any }) {
+  const trackUrl = `${APP}/track?q=${encodeURIComponent(data.orderNumber)}`
+  const hostUrl  = (process.env.HOST_APP_URL || process.env.NEXT_PUBLIC_HOST_APP_URL || '').replace(/\/$/, '')
+  const addr     = data.shippingAddress || {}
+  const addrLine = [addr.address, addr.city, addr.state, addr.zip || addr.zipCode, addr.country].filter(Boolean).join(', ')
+
+  await sendMail({
+    to: TO,
     subject: `🛒 New Order #${data.orderNumber.slice(-8).toUpperCase()} — $${data.total.toFixed(2)} (${data.paymentMethod})`,
     html: wrap(`
-      ${header(`New Order Alert 🛒`, `$${data.total.toFixed(2)} · ${data.itemCount} items`)}
+      ${header(`New Order Alert 🛒`, `$${data.total.toFixed(2)} · ${data.itemCount} item${data.itemCount===1?'':'s'}`)}
       <div class="body">
+        <div class="highlight" style="text-align:center;">
+          <p style="margin:0;font-size:13px;color:#10d988;font-weight:700;">A new order just came in — here's everything you need at a glance.</p>
+        </div>
         <div class="info-grid">
           <div class="info-box"><div class="info-box-label">Order #</div><div class="info-box-val" style="color:#10d988;font-family:monospace;">${data.orderNumber.slice(-8).toUpperCase()}</div></div>
           <div class="info-box"><div class="info-box-label">Total</div><div class="info-box-val" style="color:#10d988;">$${data.total.toFixed(2)}</div></div>
           <div class="info-box"><div class="info-box-label">Customer</div><div class="info-box-val">${data.customerName}</div></div>
-          <div class="info-box"><div class="info-box-label">Payment</div><div style="margin-top:4px;">${data.paymentMethod === 'cod' ? '<span class="badge-gold">COD</span>' : '<span class="badge">Online</span>'}</div></div>
+          <div class="info-box"><div class="info-box-label">Payment</div><div style="margin-top:4px;">${data.paymentMethod === 'cod' ? '<span class="badge-gold">Cash on Delivery</span>' : '<span class="badge">Online</span>'}</div></div>
         </div>
+        <p class="section-title" style="margin-top:18px;">Customer Email</p>
+        <div class="card" style="padding:14px 18px;">
+          <span class="val">${data.customerEmail}</span>
+        </div>
+        ${addrLine ? `
+        <p class="section-title">Shipping To</p>
+        <div class="card" style="padding:14px 18px;">
+          <span class="val">${addr.firstName || ''} ${addr.lastName || ''}</span><br/>
+          <span class="label">${addrLine}</span>${addr.phone ? `<br/><span class="label">📞 ${addr.phone}</span>` : ''}
+        </div>` : ''}
+        <p class="section-title">Items</p>
         <div class="card" style="padding:0 18px;">
           ${data.items.map(item => `<div class="product-row"><img src="${item.image||''}" alt="${item.name}" class="product-img"/><div style="flex:1;"><div class="product-name">${item.name}</div><div class="product-meta">Qty: ${item.quantity} · $${item.price}</div></div><div class="price">$${(item.price*item.quantity).toFixed(2)}</div></div>`).join('')}
         </div>
         <div style="text-align:center;margin-top:20px;">
-          <a href="${APP}/admin" class="btn">Open Admin Dashboard</a>
+          <a href="${trackUrl}" class="btn">📦 Track This Order</a>
+          ${hostUrl ? `<a href="${hostUrl}/dashboard" class="btn-outline">Open Host Dashboard</a>` : ''}
         </div>
       </div>`)
   })
@@ -372,8 +448,8 @@ export async function sendAdminNewOrderAlert(data: { orderNumber:string; custome
 export async function sendPriceDropEmail(to: string, data: { customerName:string; productName:string; productSlug:string; oldPrice:number; newPrice:number; image:string }) {
   const saving = data.oldPrice - data.newPrice
   const pct = Math.round((saving / data.oldPrice) * 100)
-  await resend.emails.send({
-    from: FROM, to,
+  await sendMail({
+    to,
     subject: `📉 Price Drop! ${data.productName} is now $${data.newPrice.toFixed(2)}`,
     html: wrap(`
       ${header('Price Drop Alert! 📉', `Save ${pct}% on your wishlist item`)}
@@ -400,8 +476,8 @@ export async function sendPriceDropEmail(to: string, data: { customerName:string
 
 // ─── LOGIN SUCCESS EMAIL ────────────────────────────────────────────────────
 export async function sendLoginSuccessEmail(to: string, data: { name: string }) {
-  return resend.emails.send({
-    from: FROM, to,
+  return sendMail({
+    to,
     subject: `Welcome back to CortexCart, ${data.name}! 👋`,
     html: wrap(`
       ${header(`Welcome back, ${data.name}! 👋`, 'You\'ve successfully signed in')}
@@ -475,8 +551,8 @@ export async function sendOrderStatusUpdateEmail(to: string, data: {
   const label = statusLabels[data.newStatus] || data.newStatus
   const emoji = statusEmojis[data.newStatus] || '📦'
 
-  return resend.emails.send({
-    from: FROM, to,
+  return sendMail({
+    to,
     subject: `${emoji} Order Update: ${label} — #${data.orderNumber.slice(-8)}`,
     html: wrap(`
       ${header(`${emoji} Order ${label}`, `Your order #${data.orderNumber.slice(-8)} has been updated`)}

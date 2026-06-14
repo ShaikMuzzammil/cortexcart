@@ -65,7 +65,7 @@ export default function RecommendationsPage() {
           </p>
           <div className="flex items-center justify-center gap-2 text-[12px] text-cx-muted">
             <TrendingUp size={12} className="text-cx-emerald"/>
-            <span>Powered by <span className="text-cx-emerald font-700">Claude AI</span> · Searches your real product catalog</span>
+            <span>Powered by <span className="text-cx-emerald font-700">CortexCart Neural Engine</span> · Searches your real product catalog</span>
           </div>
         </div>
 

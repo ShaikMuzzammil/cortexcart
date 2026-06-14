@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const body    = await req.json()
-    const { items, shippingAddress, subtotal, tax, shipping, total, couponCode, paymentMethod = 'card' } = body
+    const { items, shippingAddress, subtotal, tax, shipping, total, couponCode, paymentMethod = 'cod' } = body
 
     if (!items?.length || !shippingAddress) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
           itemCount:     items.length,
           paymentMethod,
           items:         emailItems,
+          shippingAddress,
         })
       } catch (emailErr) { console.error('[EMAIL_ADMIN]', emailErr) }
 

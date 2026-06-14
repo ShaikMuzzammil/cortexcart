@@ -1,8 +1,43 @@
 import { Resend } from 'resend'
 
-const resend   = new Resend(process.env.RESEND_API_KEY)
-const FROM     = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
-const APP      = (process.env.NEXT_PUBLIC_APP_URL || 'https://cortexcart.vercel.app').replace(/\/$/, '')
+const resend    = new Resend(process.env.RESEND_API_KEY)
+const APP       = (process.env.NEXT_PUBLIC_APP_URL || 'https://cortexcart.vercel.app').replace(/\/$/, '')
+const REPLY_TO  = process.env.CONTACT_EMAIL_TO || undefined
+
+// ── Safe "from" address ─────────────────────────────────────────────────────
+// Resend REJECTS sends where the "from" domain isn't verified on the account
+// (e.g. RESEND_FROM_EMAIL accidentally set to something@gmail.com). Since
+// gmail.com / outlook.com / yahoo.com / hotmail.com can never be verified by
+// this app, silently fall back to Resend's built-in test sender so emails
+// still go out — and log a warning so the real fix (verify a custom domain
+// at resend.com/domains) is visible in the deploy logs.
+const UNVERIFIABLE_DOMAINS = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com', 'live.com']
+function resolveFrom(): string {
+  const raw = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
+  const match = raw.match(/<([^>]+)>/) || raw.match(/([^\s<>]+@[^\s<>]+)/)
+  const addr  = (match?.[1] || raw).toLowerCase()
+  const domain = addr.split('@')[1]
+  if (domain && UNVERIFIABLE_DOMAINS.includes(domain)) {
+    console.warn(`[HOST EMAIL] RESEND_FROM_EMAIL uses "${domain}", which can never be verified on Resend. ` +
+      `Falling back to onboarding@resend.dev. Add and verify your own domain at https://resend.com/domains, ` +
+      `then update RESEND_FROM_EMAIL.`)
+    return 'CortexCart <onboarding@resend.dev>'
+  }
+  return raw
+}
+const FROM = resolveFrom()
+
+// Turn a raw Resend/network error into a short, admin-actionable message.
+function friendlyError(err: any): string {
+  const msg = err?.message || String(err)
+  if (/not verified/i.test(msg) && /domain/i.test(msg)) {
+    return `Sender domain not verified on Resend. Verify a domain at resend.com/domains, then set RESEND_FROM_EMAIL to an address on that domain. (${msg})`
+  }
+  if (/API key/i.test(msg)) {
+    return `Resend API key missing or invalid. Set RESEND_API_KEY in your environment. (${msg})`
+  }
+  return msg || 'Email send failed'
+}
 
 const STATUS_LABELS: Record<string,string> = {
   PENDING:'Order Placed', PAYMENT_CONFIRMED:'Payment Confirmed',
@@ -77,15 +112,21 @@ export async function sendStatusUpdateEmail(to: string, data: {
       Questions? <a href="${APP}/contact" style="color:#10d988">Contact support</a>
     </p>`
 
-  const result = await resend.emails.send({
-    from: FROM, to,
-    subject: `${emoji} Order Update: ${label} — #${data.orderNumber.slice(-8).toUpperCase()}`,
-    html: html(bodyHtml, `${emoji} ${label}`, `Order #${data.orderNumber.slice(-8).toUpperCase()} update`),
-  })
+  let result
+  try {
+    result = await resend.emails.send({
+      from: FROM, to, reply_to: REPLY_TO,
+      subject: `${emoji} Order Update: ${label} — #${data.orderNumber.slice(-8).toUpperCase()}`,
+      html: html(bodyHtml, `${emoji} ${label}`, `Order #${data.orderNumber.slice(-8).toUpperCase()} update`),
+    })
+  } catch (err) {
+    console.error('[HOST EMAIL ERROR]', err)
+    throw new Error(friendlyError(err))
+  }
 
   if (result.error) {
     console.error('[HOST EMAIL ERROR]', result.error)
-    throw new Error(result.error.message || 'Email send failed')
+    throw new Error(friendlyError(result.error))
   }
   return result
 }
@@ -96,14 +137,20 @@ export async function sendCustomEmail(to: string, subject: string, message: stri
     <div class="card"><p class="msg">${message.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</p></div>
     <div class="center"><a href="${APP}/contact" class="btn">Reply via Support</a></div>`
 
-  const result = await resend.emails.send({
-    from: FROM, to, subject,
-    html: html(bodyHtml, 'Message from CortexCart', 'A personal note from our team'),
-  })
+  let result
+  try {
+    result = await resend.emails.send({
+      from: FROM, to, subject, reply_to: REPLY_TO,
+      html: html(bodyHtml, 'Message from CortexCart', 'A personal note from our team'),
+    })
+  } catch (err) {
+    console.error('[HOST EMAIL ERROR]', err)
+    throw new Error(friendlyError(err))
+  }
 
   if (result.error) {
     console.error('[HOST EMAIL ERROR]', result.error)
-    throw new Error(result.error.message || 'Email send failed')
+    throw new Error(friendlyError(result.error))
   }
   return result
 }

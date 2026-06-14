@@ -66,7 +66,8 @@ export async function PATCH(req: NextRequest) {
     `${(order.shippingAddress as any)?.firstName||''} ${(order.shippingAddress as any)?.lastName||''}`.trim() ||
     'Customer'
 
-  let emailSent = false
+  let emailSent  = false
+  let emailError: string | null = null
   if (to && status) {
     try {
       const { sendStatusUpdateEmail } = await import('@/lib/email')
@@ -83,10 +84,11 @@ export async function PATCH(req: NextRequest) {
         notes:            notes || undefined,
       })
       emailSent = true
-    } catch(err) {
+    } catch(err: any) {
       console.error('[PATCH /api/orders email]', err)
+      emailError = err?.message || 'Email failed to send'
     }
   }
 
-  return NextResponse.json({ order, success:true, emailSent })
+  return NextResponse.json({ order, success:true, emailSent, emailError })
 }

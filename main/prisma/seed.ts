@@ -3,18 +3,23 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 const CATS = [
-  { name:'Tech',      slug:'tech',      description:'Gadgets, devices and electronics' },
-  { name:'Gaming',    slug:'gaming',    description:'Gaming peripherals and accessories' },
-  { name:'Home',      slug:'home',      description:'Smart home and living essentials' },
-  { name:'Fashion',   slug:'fashion',   description:'Clothing, shoes and accessories' },
-  { name:'Beauty',    slug:'beauty',    description:'Skincare, haircare and wellness' },
-  { name:'Sports',    slug:'sports',    description:'Fitness gear and outdoor equipment' },
-  { name:'Office',    slug:'office',    description:'Productivity tools and desk essentials' },
-  { name:'Music',     slug:'music',     description:'Instruments, audio and accessories' },
-  { name:'Travel',    slug:'travel',    description:'Luggage, accessories and travel gear' },
-  { name:'Books',     slug:'books',     description:'Books, courses and learning materials' },
-  { name:'Kitchen',   slug:'kitchen',   description:'Cooking tools and appliances' },
-  { name:'Pets',      slug:'pets',      description:'Pet care, toys and accessories' },
+  { name:'Tech',        slug:'tech',        description:'Gadgets, devices and electronics' },
+  { name:'Audio',       slug:'audio',        description:'Headphones, speakers and sound gear' },
+  { name:'Computing',   slug:'computing',    description:'Laptops, desktops and PC accessories' },
+  { name:'Electronics', slug:'electronics',  description:'Smart home, power and networking gear' },
+  { name:'Wearables',   slug:'wearables',    description:'Smartwatches, fitness trackers and rings' },
+  { name:'Photography', slug:'photography',  description:'Cameras, lenses and content-creation gear' },
+  { name:'Gaming',      slug:'gaming',      description:'Gaming peripherals and accessories' },
+  { name:'Home',        slug:'home',        description:'Smart home and living essentials' },
+  { name:'Fashion',     slug:'fashion',     description:'Clothing, shoes and accessories' },
+  { name:'Beauty',      slug:'beauty',      description:'Skincare, haircare and wellness' },
+  { name:'Sports',      slug:'sports',      description:'Fitness gear and outdoor equipment' },
+  { name:'Office',      slug:'office',      description:'Productivity tools and desk essentials' },
+  { name:'Music',       slug:'music',       description:'Instruments, audio and accessories' },
+  { name:'Travel',      slug:'travel',      description:'Luggage, accessories and travel gear' },
+  { name:'Books',       slug:'books',       description:'Books, courses and learning materials' },
+  { name:'Kitchen',     slug:'kitchen',     description:'Cooking tools and appliances' },
+  { name:'Pets',        slug:'pets',        description:'Pet care, toys and accessories' },
 ]
 
 // Helpers
@@ -143,7 +148,7 @@ const PRODUCTS: P[] = [
   {n:'StudyLight Clip Desk Lamp',sku:'STD-LMP-100',c:'books',p:35,cp:49,s:120,r:4.5,rc:3210,f:false,d:false,desc:'USB rechargeable reading light, 3 brightness, clip + stand.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600',t:['reading-light','clip','rechargeable']},
   {n:'NoteMax Hardcover A5 Journal',sku:'NOT-JNL-101',c:'books',p:19,cp:29,s:500,r:4.7,rc:8900,f:false,d:false,desc:'200-page dotted journal, lay-flat binding, elastic band.',img:'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600',t:['journal','notebook','dotted']},
   {n:'LearnTrack Language Cards',sku:'LRN-CRD-102',c:'books',p:25,cp:35,s:300,r:4.5,rc:2340,f:false,d:true,desc:'500 bilingual flash cards, Spanish/French/German/Japanese.',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',t:['flash-cards','language','learning']},
-  {n:'BookNook LED Display Shelf',sku:'BKN-SHF-103',c:'books',p:79,cp:99,s:40,r:4.6,rc:1890,f:true,d:false,desc:'LED lighted bookend display, 3 levels, battery or USB, oak.',img:'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600',t:['bookshelf','led','display']},
+  {n:'BookNook LED Display Shelf',sku:'BKN-SHF-103',c:'books',p:79,cp:99,s:40,r:4.6,rc:1890,f:true,d:false,desc:'LED lighted bookend display, 3 levels, battery or USB, oak.',img:'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600',t:['bookshelf','led','display']},
 
   // ── KITCHEN (8) ───────────────────────────────────────────────────
   {n:'ChefKnife Damascus 8"',sku:'CHF-KNF-104',c:'kitchen',p:129,cp:169,s:25,r:4.9,rc:4560,f:true,d:false,desc:'67-layer Damascus steel chef knife, G10 handle, VG10 core.',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',t:['knife','damascus','chef']},
@@ -156,14 +161,64 @@ const PRODUCTS: P[] = [
   {n:'MealPrep Glass Container 10pc',sku:'MPR-CNT-111',c:'kitchen',p:49,cp:65,s:90,r:4.6,rc:4560,f:false,d:false,desc:'10-piece borosilicate glass meal prep set, oven + microwave safe.',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600',t:['meal-prep','glass','containers']},
 
   // ── PETS (8) ──────────────────────────────────────────────────────
-  {n:'SmartFeed Auto Pet Feeder',sku:'SMT-FDR-112',c:'pets',p:79,cp:99,s:45,r:4.7,rc:3450,f:true,d:false,desc:'Wi-Fi auto pet feeder, 6L, app schedule, meal notifications.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-feeder','auto','smart']},
-  {n:'PawPrint DNA Kit',sku:'PAW-DNA-113',c:'pets',p:89,cp:119,s:30,r:4.5,rc:2100,f:false,d:false,desc:'Dog DNA breed + health test, 350+ breeds, vet-grade results.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['dna','dog','health']},
-  {n:'HippoWash Dog Grooming Kit',sku:'HPW-GRM-114',c:'pets',p:59,cp:79,s:60,r:4.6,rc:1890,f:false,d:true,desc:'6-piece dog grooming kit, waterless shampoo + brush + nail file.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['grooming','dog','pet-care']},
+  {n:'SmartFeed Auto Pet Feeder',sku:'SMT-FDR-112',c:'pets',p:79,cp:99,s:45,r:4.7,rc:3450,f:true,d:false,desc:'Wi-Fi auto pet feeder, 6L, app schedule, meal notifications.',img:'https://images.unsplash.com/photo-1591946614720-90a588f04dac?w=600',t:['pet-feeder','auto','smart']},
+  {n:'PawPrint DNA Kit',sku:'PAW-DNA-113',c:'pets',p:89,cp:119,s:30,r:4.5,rc:2100,f:false,d:false,desc:'Dog DNA breed + health test, 350+ breeds, vet-grade results.',img:'https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?w=600',t:['dna','dog','health']},
+  {n:'HippoWash Dog Grooming Kit',sku:'HPW-GRM-114',c:'pets',p:59,cp:79,s:60,r:4.6,rc:1890,f:false,d:true,desc:'6-piece dog grooming kit, waterless shampoo + brush + nail file.',img:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600',t:['grooming','dog','pet-care']},
   {n:'PetCam HD 1080P Treat Dispenser',sku:'PCT-CAM-115',c:'pets',p:149,cp:199,s:22,r:4.7,rc:2340,f:true,d:false,desc:'1080P pet camera, treat dispenser, 2-way audio, night vision.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-camera','treat-dispenser','wifi']},
-  {n:'FleeceNest Cat Tree XL',sku:'FLC-TRE-116',c:'pets',p:99,cp:129,s:18,r:4.5,rc:1560,f:false,d:false,desc:'5-tier cat tree, sisal posts, plush beds, hammock, 65".',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['cat-tree','cat','scratcher']},
-  {n:'HydroFresh Pet Water Fountain',sku:'HYD-FNT-117',c:'pets',p:45,cp:59,s:80,r:4.7,rc:5670,f:false,d:false,desc:'3L filtered pet fountain, triple filter, ultra-quiet, SS.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['water-fountain','pet','filter']},
-  {n:'TravelPet Airline Carrier Bag',sku:'TRV-CAR-118',c:'pets',p:69,cp:89,s:40,r:4.5,rc:1230,f:false,d:true,desc:'IATA-approved airline pet carrier, telescoping handle, mesh.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['pet-carrier','airline','travel']},
-  {n:'ZoomBall Interactive Dog Toy',sku:'ZOM-TOY-119',c:'pets',p:29,cp:39,s:150,r:4.6,rc:3450,f:false,d:false,desc:'Automatic moving ball, motion-activated, 3 speeds, USB charge.',img:'https://images.unsplash.com/photo-1548767797-d8c844163c4a?w=600',t:['dog-toy','interactive','automatic']},
+  {n:'FleeceNest Cat Tree XL',sku:'FLC-TRE-116',c:'pets',p:99,cp:129,s:18,r:4.5,rc:1560,f:false,d:false,desc:'5-tier cat tree, sisal posts, plush beds, hammock, 65".',img:'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=600',t:['cat-tree','cat','scratcher']},
+  {n:'HydroFresh Pet Water Fountain',sku:'HYD-FNT-117',c:'pets',p:45,cp:59,s:80,r:4.7,rc:5670,f:false,d:false,desc:'3L filtered pet fountain, triple filter, ultra-quiet, SS.',img:'https://images.unsplash.com/photo-1591946614720-90a588f04dac?w=600',t:['water-fountain','pet','filter']},
+  {n:'TravelPet Airline Carrier Bag',sku:'TRV-CAR-118',c:'pets',p:69,cp:89,s:40,r:4.5,rc:1230,f:false,d:true,desc:'IATA-approved airline pet carrier, telescoping handle, mesh.',img:'https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?w=600',t:['pet-carrier','airline','travel']},
+  {n:'ZoomBall Interactive Dog Toy',sku:'ZOM-TOY-119',c:'pets',p:29,cp:39,s:150,r:4.6,rc:3450,f:false,d:false,desc:'Automatic moving ball, motion-activated, 3 speeds, USB charge.',img:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600',t:['dog-toy','interactive','automatic']},
+
+  // ── AUDIO (8) ─────────────────────────────────────────────────────
+  {n:'Echo 360 Spatial Speaker',sku:'AUD-SPK-200',c:'audio',p:399,cp:499,s:20,r:4.8,rc:2107,f:true,d:true,desc:'True omnidirectional 360° sound with spatial audio processing. Adaptive room tuning, 40W, Wi-Fi 6 + BT 5.3.',img:'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600',t:['speaker','audio','wireless','spatial']},
+  {n:'AuralFit Pro Earbuds',sku:'AUD-EAR-201',c:'audio',p:179,cp:229,s:34,r:4.7,rc:3980,f:true,d:false,desc:'True wireless earbuds, adaptive ANC, 32h battery, IP55, wireless charging case.',img:'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=600',t:['earbuds','wireless','anc']},
+  {n:'BassForge Over-Ear Studio',sku:'AUD-HDP-202',c:'audio',p:249,cp:319,s:18,r:4.8,rc:1670,f:true,d:true,desc:'Closed-back studio headphones, 50mm drivers, detachable cable, foldable.',img:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600',t:['headphones','studio','over-ear']},
+  {n:'SilentWave ANC Headphones',sku:'AUD-HDP-203',c:'audio',p:299,cp:379,s:14,r:4.9,rc:5230,f:true,d:false,desc:'Industry-leading ANC over-ear headphones, 40h battery, multipoint BT 5.3.',img:'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600',t:['headphones','anc','wireless']},
+  {n:'VinylRevive Turntable Classic',sku:'AUD-TBL-204',c:'audio',p:229,cp:289,s:16,r:4.6,rc:840,f:false,d:true,desc:'Belt-drive turntable, built-in preamp, Bluetooth output, walnut finish.',img:'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600',t:['turntable','vinyl','retro']},
+  {n:'NeckLoop Bluetooth Sport Headset',sku:'AUD-HDP-205',c:'audio',p:59,cp:79,s:65,r:4.5,rc:2230,f:false,d:false,desc:'Open-ear bone-conduction sport headset, sweatproof, 10h battery.',img:'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600',t:['headset','sport','bone-conduction']},
+  {n:'PocketAmp Portable DAC/Amp',sku:'AUD-AMP-206',c:'audio',p:139,cp:179,s:25,r:4.7,rc:610,f:false,d:false,desc:'Hi-res USB-C DAC/amp, balanced output, drives high-impedance cans.',img:'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=600',t:['dac','amp','hi-res']},
+  {n:'WaveCube Mini Bluetooth Speaker',sku:'AUD-SPK-207',c:'audio',p:49,cp:69,s:110,r:4.6,rc:6780,f:false,d:true,desc:'Pocket-size IP67 speaker, 12h battery, pair-two for stereo.',img:'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600',t:['speaker','bluetooth','portable']},
+
+  // ── COMPUTING (8) ─────────────────────────────────────────────────
+  {n:'NimbusBook Air 14"',sku:'CMP-LAP-210',c:'computing',p:1099,cp:1299,s:12,r:4.8,rc:1450,f:true,d:true,desc:'14" 2.8K OLED ultrabook, all-day battery, fanless silent design.',img:'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600',t:['laptop','ultrabook','oled']},
+  {n:'CodeForge Dev Laptop 16"',sku:'CMP-LAP-211',c:'computing',p:1799,cp:2099,s:8,r:4.9,rc:980,f:true,d:false,desc:'16" 165Hz QHD, 32GB RAM, discrete GPU — built for developers and creators.',img:'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600',t:['laptop','developer','high-performance']},
+  {n:'DeskCore Mini PC i7',sku:'CMP-PC-212',c:'computing',p:649,cp:799,s:20,r:4.6,rc:540,f:false,d:true,desc:'Compact mini-PC, 12-core CPU, dual 4K output, near-silent.',img:'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600',t:['mini-pc','desktop','compact']},
+  {n:'TypeWave Compact Mechanical Keyboard',sku:'CMP-KBD-213',c:'computing',p:99,cp:129,s:48,r:4.7,rc:2310,f:false,d:false,desc:'65% hot-swappable mechanical keyboard, USB-C, PBT keycaps.',img:'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600',t:['keyboard','mechanical','compact']},
+  {n:'PixelView 4K Monitor 32"',sku:'CMP-MON-214',c:'computing',p:549,cp:699,s:14,r:4.8,rc:1120,f:true,d:true,desc:'32" 4K IPS monitor, 99% sRGB, USB-C 90W power delivery, height-adjustable.',img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600',t:['monitor','4k','usb-c']},
+  {n:'SilentTower Workstation PC',sku:'CMP-PC-215',c:'computing',p:1499,cp:1799,s:9,r:4.7,rc:430,f:false,d:false,desc:'Liquid-cooled workstation tower, 64GB RAM, RTX-class GPU.',img:'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600',t:['desktop','workstation','gaming']},
+  {n:'FlexRiser Aluminum Laptop Stand',sku:'CMP-ACC-216',c:'computing',p:45,cp:59,s:90,r:4.6,rc:3210,f:false,d:false,desc:'Foldable aluminum laptop stand, 7 angles, heat-dissipating design.',img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600',t:['laptop-stand','aluminum','ergonomic']},
+  {n:'QuickSync NVMe External Dock',sku:'CMP-ACC-217',c:'computing',p:69,cp:89,s:55,r:4.5,rc:870,f:false,d:true,desc:'Tool-free M.2 NVMe enclosure, USB 3.2 Gen2x2 20Gbps, aluminum.',img:'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600',t:['ssd-dock','nvme','external']},
+
+  // ── ELECTRONICS (8) ───────────────────────────────────────────────
+  {n:'PowerGrid Smart Surge Protector',sku:'ELC-PWR-220',c:'electronics',p:39,cp:55,s:140,r:4.6,rc:3450,f:false,d:true,desc:'12-outlet surge protector with 4 smart plugs, app scheduling, energy monitor.',img:'https://images.unsplash.com/photo-1586495777744-4e6232bf2fb7?w=600',t:['surge-protector','smart-plug','energy']},
+  {n:'MeshLink Wi-Fi 6E System (3-pack)',sku:'ELC-NET-221',c:'electronics',p:249,cp:329,s:18,r:4.8,rc:1980,f:true,d:false,desc:'Whole-home mesh Wi-Fi 6E, covers 6500 sq ft, AI traffic optimization.',img:'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600',t:['wifi','mesh','networking']},
+  {n:'VoltCore 65W GaN Wall Charger',sku:'ELC-CHG-222',c:'electronics',p:34,cp:45,s:200,r:4.7,rc:5670,f:false,d:false,desc:'Triple-port 65W GaN charger, foldable plug, fits in your pocket.',img:'https://images.unsplash.com/photo-1609592424858-7de65a53f4f1?w=600',t:['charger','gan','usb-c']},
+  {n:'BeamCast 4K Streaming Stick',sku:'ELC-STR-223',c:'electronics',p:49,cp:69,s:85,r:4.6,rc:7890,f:true,d:true,desc:'4K HDR streaming stick, voice remote, Wi-Fi 6, all major apps.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['streaming','4k','media']},
+  {n:'SignalBoost Cellular Amplifier',sku:'ELC-NET-224',c:'electronics',p:299,cp:379,s:10,r:4.5,rc:320,f:false,d:false,desc:'Boosts 4G/5G signal up to 4000 sq ft, supports all major carriers.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['signal-booster','cellular','5g']},
+  {n:'GlowSync Smart Switch (4-pack)',sku:'ELC-HOM-225',c:'electronics',p:59,cp:79,s:95,r:4.6,rc:2980,f:false,d:true,desc:'In-wall smart light switches, no hub needed, voice + app control.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',t:['smart-switch','smart-home','lighting']},
+  {n:'ChargeDock 3-in-1 Wireless Stand',sku:'ELC-CHG-226',c:'electronics',p:79,cp:99,s:60,r:4.7,rc:1670,f:true,d:false,desc:'15W MagSafe-compatible charging stand for phone, watch and earbuds.',img:'https://images.unsplash.com/photo-1586495777744-4e6232bf2fb7?w=600',t:['wireless-charger','magsafe','stand']},
+  {n:'LinkBridge Smart Home Hub Pro',sku:'ELC-HOM-227',c:'electronics',p:99,cp:129,s:38,r:4.6,rc:1230,f:false,d:false,desc:'Matter/Zigbee/Z-Wave hub, unifies all your smart devices in one app.',img:'https://images.unsplash.com/photo-1625842268584-8f3296236761?w=600',t:['smart-hub','matter','automation']},
+
+  // ── WEARABLES (8) ─────────────────────────────────────────────────
+  {n:'PulseBand Fitness Tracker 2',sku:'WER-FIT-230',c:'wearables',p:79,cp:99,s:70,r:4.6,rc:5430,f:true,d:true,desc:'Slim fitness band, 24/7 heart rate, SpO2, 14-day battery, 5ATM.',img:'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600',t:['fitness-tracker','heart-rate','band']},
+  {n:'AeroRing Smart Health Ring',sku:'WER-RNG-231',c:'wearables',p:269,cp:329,s:15,r:4.7,rc:780,f:true,d:false,desc:'Titanium smart ring — sleep, recovery, HRV and temperature tracking.',img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['smart-ring','sleep','recovery']},
+  {n:'ChronoFit GPS Sports Watch',sku:'WER-WCH-232',c:'wearables',p:329,cp:399,s:18,r:4.8,rc:2340,f:true,d:true,desc:'Multi-sport GPS watch, 40+ modes, solar-assist charging, 14-day battery.',img:'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600',t:['sports-watch','gps','solar']},
+  {n:'FlexCuff Posture Corrector Band',sku:'WER-POS-233',c:'wearables',p:39,cp:55,s:120,r:4.4,rc:1450,f:false,d:false,desc:'Smart posture trainer, gentle vibration nudges, app progress tracking.',img:'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600',t:['posture','wellness','smart']},
+  {n:'SleepSense Recovery Ring',sku:'WER-RNG-234',c:'wearables',p:229,cp:289,s:22,r:4.6,rc:610,f:false,d:true,desc:'Lightweight recovery ring, readiness score, 7-day battery.',img:'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600',t:['smart-ring','recovery','sleep']},
+  {n:'KidsTrack GPS Watch Jr',sku:'WER-WCH-235',c:'wearables',p:69,cp:89,s:50,r:4.5,rc:1980,f:false,d:false,desc:'Kid-safe GPS smartwatch, SOS button, school mode, parent app.',img:'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600',t:['kids','gps-watch','safety']},
+  {n:'HeartGuard ECG Monitor Watch',sku:'WER-WCH-236',c:'wearables',p:399,cp:499,s:10,r:4.8,rc:920,f:true,d:false,desc:'Medical-grade ECG + blood pressure smartwatch, AMOLED, 10-day battery.',img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600',t:['ecg','health','smartwatch']},
+  {n:'StepCount Pedometer Clip Pro',sku:'WER-PED-237',c:'wearables',p:24,cp:34,s:160,r:4.4,rc:2670,f:false,d:false,desc:'Clip-on pedometer, no app needed, 30-day memory, OLED display.',img:'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600',t:['pedometer','fitness','clip']},
+
+  // ── PHOTOGRAPHY (8) ───────────────────────────────────────────────
+  {n:'FrameWorks Mirrorless Starter Kit',sku:'PHO-CAM-240',c:'photography',p:899,cp:1099,s:12,r:4.8,rc:1340,f:true,d:true,desc:'24MP mirrorless camera with 18-55mm kit lens, 4K60 video, dual-card slots.',img:'https://images.unsplash.com/photo-1500634245200-e5245c7574ef?w=600',t:['camera','mirrorless','kit']},
+  {n:'ZoomCraft 70-300mm Telephoto Lens',sku:'PHO-LNS-241',c:'photography',p:449,cp:579,s:14,r:4.6,rc:560,f:false,d:false,desc:'70-300mm f/4.5-6.3 telephoto zoom, optical stabilization, weather-sealed.',img:'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600',t:['lens','telephoto','zoom']},
+  {n:'SteadyArm 3-Axis Gimbal Stabilizer',sku:'PHO-GMB-242',c:'photography',p:139,cp:179,s:30,r:4.7,rc:2210,f:true,d:true,desc:'Foldable 3-axis gimbal, 12h battery, auto face-track, app control.',img:'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600',t:['gimbal','stabilizer','video']},
+  {n:'LumaPod Carbon Fiber Tripod',sku:'PHO-TRP-243',c:'photography',p:179,cp:229,s:22,r:4.8,rc:1670,f:false,d:false,desc:'Carbon fiber travel tripod, 5kg capacity, ball head, folds to 16".',img:'https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=600',t:['tripod','carbon-fiber','travel']},
+  {n:'ChromaFilter ND Filter Kit (6-pack)',sku:'PHO-FLT-244',c:'photography',p:89,cp:119,s:45,r:4.6,rc:780,f:false,d:true,desc:'Variable ND + polarizer filter set, multi-coated, magnetic mount.',img:'https://images.unsplash.com/photo-1606986628253-05620e9a4e22?w=600',t:['filters','nd','lens']},
+  {n:'PocketLight RGB Video Panel',sku:'PHO-LGT-245',c:'photography',p:69,cp:89,s:60,r:4.7,rc:1340,f:false,d:false,desc:'Pocket RGB LED panel, 2500K-9000K, magnetic mount, app control.',img:'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600',t:['video-light','rgb','portable']},
+  {n:'MicroLens Macro Extension Tube Set',sku:'PHO-MAC-246',c:'photography',p:39,cp:55,s:75,r:4.5,rc:430,f:false,d:false,desc:'Auto-focus macro extension tubes, brass mount, all-metal build.',img:'https://images.unsplash.com/photo-1606986628253-05620e9a4e22?w=600',t:['macro','lens','extension-tube']},
+  {n:'CardVault 256GB Pro Memory Kit',sku:'PHO-MEM-247',c:'photography',p:59,cp:79,s:100,r:4.8,rc:3120,f:true,d:false,desc:'2x 256GB UHS-II SD cards + rugged carry case, 300MB/s read.',img:'https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=600',t:['memory-card','storage','sd-card']},
 ]
 
 async function main() {

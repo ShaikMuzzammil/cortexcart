@@ -26,9 +26,10 @@ const RATINGS = [
 ]
 
 const CAT_ICONS: Record<string, string> = {
-  tech:'💻', home:'🏠', fashion:'👗', beauty:'✨',
-  sports:'🏋️', food:'🍳', gaming:'🎮', office:'🖊️',
-  music:'🎵', travel:'✈️',
+  tech:'💻', audio:'🎧', computing:'🖥️', electronics:'🔌', wearables:'⌚', photography:'📷',
+  gaming:'🎮', home:'🏠', fashion:'👗', beauty:'✨',
+  sports:'🏋️', office:'🖊️', music:'🎵', travel:'✈️',
+  books:'📚', kitchen:'🍳', pets:'🐾',
 }
 
 export function ProductFilters({ categories, currentParams }: Props) {

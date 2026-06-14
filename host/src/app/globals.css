@@ -46,3 +46,38 @@ body {
 .input:focus { border-color: #10d988; }
 
 .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+/* ── Login page animations ───────────────────────────────────── */
+@keyframes gridPan {
+  0%   { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(20px, -30px) scale(1.08); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-25px, 25px) scale(1.05); }
+}
+@keyframes glowPulseRing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,217,136,0.35), 0 0 32px rgba(16,217,136,0.25); }
+  50%      { box-shadow: 0 0 0 10px rgba(16,217,136,0), 0 0 48px rgba(16,217,136,0.45); }
+}
+@keyframes particleDrift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+}
+.login-grid-bg {
+  background-image:
+    linear-gradient(rgba(16,217,136,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,217,136,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridPan 6s linear infinite;
+}
+.login-orb-1 { animation: orbFloat 9s ease-in-out infinite; }
+.login-orb-2 { animation: orbFloat2 11s ease-in-out infinite; }
+.login-logo-glow { animation: glowPulseRing 3s ease-in-out infinite; }
+.login-particle { animation: particleDrift linear infinite; }

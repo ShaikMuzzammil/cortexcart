@@ -1,7 +1,8 @@
 # ─────────────────────────────────────────────────────────────────
-#  CortexCart — Database Migration
-#  Runs `prisma db push` against Neon on every push to main/master
-#  Also has a manual "Run workflow" button for emergencies
+#  CortexCart — Database Migration & Seed
+#  Runs `prisma db push` + `prisma db seed` against Neon whenever the
+#  schema or product catalog (seed.ts) changes on main/master.
+#  Also has a manual "Run workflow" button for emergencies.
 # ─────────────────────────────────────────────────────────────────
 name: Database Migration
 
@@ -9,7 +10,8 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'main/prisma/schema.prisma'   # only runs when schema changes
+      - 'main/prisma/schema.prisma'   # schema changes
+      - 'main/prisma/seed.ts'         # catalog/category changes
   workflow_dispatch:                  # manual trigger button in Actions tab
 
 concurrency:
@@ -18,7 +20,7 @@ concurrency:
 
 jobs:
   migrate:
-    name: Prisma DB Push → Neon
+    name: Prisma DB Push + Seed → Neon
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -46,6 +48,12 @@ jobs:
       - name: Push schema to Neon database
         working-directory: main
         run: npx prisma db push --skip-generate --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed catalog (categories + products, idempotent upsert)
+        working-directory: main
+        run: npm run db:seed
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 

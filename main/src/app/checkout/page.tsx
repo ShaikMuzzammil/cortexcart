@@ -7,7 +7,7 @@ import { useNotifStore } from '@/store/notifications'
 import { formatPrice } from '@/lib/utils'
 import {
   ShoppingBag, CreditCard, Truck, CheckCircle2, ArrowLeft, ArrowRight,
-  Loader2, Shield, Lock, Zap, BadgeCheck, Package, MapPin, Clock,
+  Loader2, Shield, Zap, BadgeCheck, Package, MapPin, Clock,
   Banknote, ChevronRight, Check, AlertCircle, RotateCcw, Copy
 } from 'lucide-react'
 import Link from 'next/link'
@@ -58,7 +58,7 @@ export default function CheckoutPage() {
   const [step,       setStep]       = useState(1)
   const [addr,       setAddr]       = useState<Addr>(empty)
   const [ship,       setShip]       = useState('standard')
-  const [payMethod,  setPayMethod]  = useState<'cod' | 'card'>('cod')
+  const payMethod = 'cod' as const
   const [processing, setProc]       = useState(false)
   const [orderNum,   setOrderNum]   = useState<string | null>(null)
   const [orderId,    setOrderId]    = useState<string | null>(null)
@@ -301,105 +301,66 @@ export default function CheckoutPage() {
                 </motion.div>
               )}
 
-              {/* Step 3: Payment — Cash on Delivery default */}
+              {/* Step 3: Payment — Cash on Delivery only */}
               {step === 3 && (
                 <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                   className="space-y-5">
                   <div className="flex items-center gap-2 px-4 py-2 bg-cx-emerald/8 border border-cx-emerald/20 rounded-xl">
                     <Shield size={14} className="text-cx-emerald flex-shrink-0" />
-                    <p className="text-[12px] text-cx-emerald font-600">256-bit SSL encrypted · Your payment data is never stored</p>
+                    <p className="text-[12px] text-cx-emerald font-600">256-bit SSL encrypted · Your data is never stored or shared</p>
                   </div>
 
-                  <div className="cx-card p-6">
-                    <h2 className="font-display font-800 text-[18px] text-white flex items-center gap-2 mb-4">
-                      <CreditCard size={18} className="text-cx-emerald" /> Payment Method
+                  <div className="cx-card p-6 overflow-hidden relative">
+                    <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-[60px] bg-cx-emerald/10 pointer-events-none" />
+                    <h2 className="font-display font-800 text-[18px] text-white flex items-center gap-2 mb-4 relative">
+                      <Banknote size={18} className="text-cx-emerald" /> Payment Method
                     </h2>
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                      {/* Pay on Delivery — shown first, default */}
-                      <label className={cn('cursor-pointer p-4 rounded-xl border-2 transition-all text-center',
-                        payMethod === 'cod' ? 'border-cx-emerald bg-cx-emerald/8' : 'border-cx-border hover:border-cx-border/80'
-                      )}>
-                        <input type="radio" value="cod" checked={payMethod === 'cod'} onChange={() => setPayMethod('cod')} className="hidden" />
-                        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2',
-                          payMethod === 'cod' ? 'bg-cx-emerald/20' : 'bg-cx-surface'
-                        )}>
-                          <Banknote size={20} className={payMethod === 'cod' ? 'text-cx-emerald' : 'text-cx-muted'} />
-                        </div>
-                        <p className={cn('text-[13px] font-700', payMethod === 'cod' ? 'text-cx-emerald' : 'text-cx-text')}>Pay Cash</p>
-                        <p className="text-[10px] text-cx-muted mt-0.5">Pay when delivered</p>
-                      </label>
 
-                      {/* Pay Online — secondary */}
-                      <label className={cn('cursor-pointer p-4 rounded-xl border-2 transition-all text-center',
-                        payMethod === 'card' ? 'border-cx-violet bg-cx-violet/8' : 'border-cx-border hover:border-cx-border/80'
-                      )}>
-                        <input type="radio" value="card" checked={payMethod === 'card'} onChange={() => setPayMethod('card')} className="hidden" />
-                        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2',
-                          payMethod === 'card' ? 'bg-cx-violet/20' : 'bg-cx-surface'
-                        )}>
-                          <CreditCard size={20} className={payMethod === 'card' ? 'text-cx-violet' : 'text-cx-muted'} />
+                    <div className="relative rounded-2xl border-2 border-cx-emerald bg-cx-emerald/8 p-5 flex items-center gap-4 mb-5">
+                      <div className="w-14 h-14 rounded-2xl bg-cx-emerald/15 flex items-center justify-center flex-shrink-0">
+                        <Banknote size={26} className="text-cx-emerald" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[15px] font-800 text-white">Cash on Delivery</p>
+                          <span className="text-[10px] font-700 px-2 py-0.5 rounded-full bg-cx-emerald/20 text-cx-emerald uppercase tracking-wide">Only option · Always free</span>
                         </div>
-                        <p className={cn('text-[13px] font-700', payMethod === 'card' ? 'text-cx-violet' : 'text-cx-text')}>Pay Online</p>
-                        <p className="text-[10px] text-cx-muted mt-0.5">Card / UPI / Wallet</p>
-                      </label>
+                        <p className="text-[12px] text-cx-muted mt-0.5">Pay with cash directly to the courier when your order arrives</p>
+                      </div>
+                      <CheckCircle2 size={22} className="text-cx-emerald flex-shrink-0" />
                     </div>
 
-                    <AnimatePresence mode="wait">
-                      {payMethod === 'cod' && (
-                        <motion.div key="cod" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                          className="overflow-hidden">
-                          <div className="bg-cx-emerald/6 border border-cx-emerald/20 rounded-xl p-5 space-y-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-cx-emerald/15 flex items-center justify-center">
-                                <Banknote size={22} className="text-cx-emerald" />
-                              </div>
-                              <div>
-                                <p className="text-[15px] font-700 text-white">Pay on Delivery</p>
-                                <p className="text-[12px] text-cx-muted">Pay with cash when your order arrives</p>
-                              </div>
+                    <div className="bg-cx-emerald/6 border border-cx-emerald/20 rounded-xl p-5 space-y-4 relative">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                          { icon: Banknote,    title: 'Pay only on arrival',  desc: 'No charge until your order is in your hands' },
+                          { icon: Shield,      title: 'No card required',     desc: 'Zero risk of card fraud — nothing to store' },
+                          { icon: BadgeCheck,  title: 'Up to $500 orders',    desc: 'COD available for orders up to $500' },
+                          { icon: Package,     title: 'Live tracking',        desc: 'Order status emailed at every step' },
+                        ].map(f => (
+                          <div key={f.title} className="flex items-start gap-3 p-3 rounded-xl bg-cx-bg/40 border border-cx-border/50">
+                            <div className="w-9 h-9 rounded-lg bg-cx-emerald/15 flex items-center justify-center flex-shrink-0">
+                              <f.icon size={16} className="text-cx-emerald" />
                             </div>
-                            <ul className="space-y-2.5">
-                              {[
-                                'Pay only when you receive your order',
-                                'Keep exact change ready for delivery person',
-                                'COD available for orders up to $500',
-                                'Order tracking sent to your email',
-                                'No hidden fees or extra charges',
-                              ].map(item => (
-                                <li key={item} className="flex items-center gap-2.5 text-[12px] text-cx-dim">
-                                  <Check size={12} className="text-cx-emerald flex-shrink-0" /> {item}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {payMethod === 'card' && (
-                        <motion.div key="card" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                          className="space-y-4 overflow-hidden">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-[12px] font-600 text-cx-muted">Visa</span>
-                            <span className="text-[12px] font-600 text-cx-muted">Mastercard</span>
-                            <span className="text-[12px] font-600 text-cx-muted">Amex</span>
-                            <div className="ml-auto flex items-center gap-1 text-[10px] text-cx-muted">
-                              <Lock size={10} /> Secure
+                            <div>
+                              <p className="text-[12px] font-700 text-white">{f.title}</p>
+                              <p className="text-[11px] text-cx-muted mt-0.5 leading-snug">{f.desc}</p>
                             </div>
                           </div>
-                          <div className="bg-cx-sky/8 border border-cx-sky/20 rounded-xl px-4 py-3">
-                            <p className="text-[11px] text-cx-sky font-600 flex items-center gap-2">
-                              <AlertCircle size={12} /> Demo mode — No real payment processed.
-                            </p>
-                          </div>
-                          <InputField label="Cardholder Name" value="" onChange={() => {}} placeholder="Name on card" />
-                          <InputField label="Card Number" value="" onChange={() => {}} placeholder="1234 5678 9012 3456" />
-                          <div className="grid grid-cols-2 gap-4">
-                            <InputField label="Expiry Date" value="" onChange={() => {}} placeholder="MM/YY" />
-                            <InputField label="CVC" value="" onChange={() => {}} placeholder="• • •" />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        ))}
+                      </div>
+                      <ul className="space-y-2 pt-2 border-t border-cx-border/40">
+                        {[
+                          'Keep exact change ready for the delivery person',
+                          'Order tracking link sent straight to your email',
+                          'No hidden fees or extra charges — what you see is what you pay',
+                        ].map(item => (
+                          <li key={item} className="flex items-center gap-2.5 text-[12px] text-cx-dim">
+                            <Check size={12} className="text-cx-emerald flex-shrink-0" /> {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </motion.div>
               )}
