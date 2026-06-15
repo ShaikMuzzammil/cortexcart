@@ -28,7 +28,7 @@ export default function RecommendationsPage() {
   const [results, setResults] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [asked,   setAsked]   = useState('')
-  const [mode,    setMode]    = useState<'ai'|'keyword'|null>(null)
+  const [mode,    setMode]    = useState<string | null>(null)
   const { addItem }     = useCartStore()
   const { toggle, has } = useWishlistStore()
 
@@ -118,8 +118,8 @@ export default function RecommendationsPage() {
                 <h2 className="font-display font-800 text-2xl text-white">"{asked}"</h2>
               </div>
               <div className="flex items-center gap-2">
-                <span className={cn('text-[11px] font-700 px-3 py-1 rounded-full', mode === 'ai' ? 'bg-cx-violet/10 text-cx-violet border border-cx-violet/20' : 'bg-cx-sky/10 text-cx-sky border border-cx-sky/20')}>
-                  {mode === 'ai' ? '✦ AI matched' : '● Keyword matched'}
+                <span className={cn('text-[11px] font-700 px-3 py-1 rounded-full', mode !== 'keyword' ? 'bg-cx-violet/10 text-cx-violet border border-cx-violet/20' : 'bg-cx-sky/10 text-cx-sky border border-cx-sky/20')}>
+                  {mode !== 'keyword' ? '✦ AI matched' : '● Keyword matched'}
                 </span>
                 <span className="text-[12px] text-cx-muted">{results.length} found</span>
               </div>
