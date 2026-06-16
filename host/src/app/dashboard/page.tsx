@@ -6,7 +6,8 @@ import {
   XCircle, MapPin, Calendar, Edit3, Save, X, Send, Loader2,
   Zap, DollarSign, Filter, Bell, BarChart3, Users, ArrowUpRight,
   ExternalLink, Eye, ChevronRight, AlertCircle, Banknote, Box,
-  TrendingUp, Activity, Hash, PhoneCall
+  TrendingUp, Activity, Hash, PhoneCall, MessageSquare, Inbox,
+  Tag, StickyNote, Archive, Reply
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
@@ -24,6 +25,12 @@ interface Order {
     id: string; quantity: number; unitPrice: number; totalPrice: number
     product: { name: string; images: string[]; slug: string; brand: string | null }
   }[]
+}
+
+interface ContactMessage {
+  id: string; name: string; email: string; subject: string
+  message: string; category: string; priority: string
+  status: string; notes: string | null; createdAt: string; updatedAt: string
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -111,7 +118,16 @@ export default function Dashboard() {
   const [sendingMail, setSendingMail] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [lastRefresh, setLastRefresh] = useState(new Date())
-  const [view,        setView]        = useState<'orders'|'analytics'>('orders')
+  const [view,        setView]        = useState<'orders'|'analytics'|'contacts'>('orders')
+
+  // ── Contact Messages state ────────────────────────────────────────────────
+  const [contacts,       setContacts]       = useState<ContactMessage[]>([])
+  const [contactCounts,  setContactCounts]  = useState<Record<string,number>>({})
+  const [contactSearch,  setContactSearch]  = useState('')
+  const [contactStatus,  setContactStatus]  = useState('all')
+  const [contactLoading, setContactLoading] = useState(false)
+  const [expandedContact,setExpandedContact]= useState<string|null>(null)
+  const [contactNotes,   setContactNotes]   = useState<Record<string,string>>({})
   const timerRef = useRef<any>(null)
 
   const filterStatus = TAB_STATUS[activeTab]
@@ -221,6 +237,34 @@ export default function Dashboard() {
     setTimeout(() => setCopied(null), 2000)
   }
 
+  // ── Contact Messages helpers ──────────────────────────────────────────────
+  const fetchContacts = useCallback(async () => {
+    setContactLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (contactStatus !== 'all') params.set('status', contactStatus)
+      if (contactSearch)           params.set('search', contactSearch)
+      const res = await fetch(`/api/contacts?${params}`)
+      const data = await res.json()
+      setContacts(data.messages || [])
+      setContactCounts(data.counts || {})
+    } catch (e) { console.error(e) }
+    setContactLoading(false)
+  }, [contactStatus, contactSearch])
+
+  useEffect(() => { if (view === 'contacts') fetchContacts() }, [view, fetchContacts])
+
+  const updateContact = async (id: string, patch: { status?: string; notes?: string }) => {
+    try {
+      await fetch('/api/contacts', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...patch }),
+      })
+      setContacts(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c))
+      toast.success('Updated')
+    } catch { toast.error('Failed to update') }
+  }
+
   const openEmail = (o: Order) => {
     const name = o.user?.name || `${(o.shippingAddress as any)?.firstName||''} ${(o.shippingAddress as any)?.lastName||''}`.trim()
     setEmailModal(o)
@@ -287,11 +331,19 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-1 ml-4">
-            {(['orders','analytics'] as const).map(v => (
+            {(['orders','analytics','contacts'] as const).map(v => (
               <button key={v} onClick={()=>setView(v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-700 capitalize transition-all ${view===v ? 'text-white' : 'hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-700 capitalize transition-all relative ${view===v ? 'text-white' : 'hover:text-white'}`}
                 style={view===v ? {background:'rgba(16,217,136,0.12)',color:'#10d988'} : {color:'#4a5a7a'}}>
-                {v === 'orders' ? <><Package className="inline w-3 h-3 mr-1"/>Orders</> : <><BarChart3 className="inline w-3 h-3 mr-1"/>Analytics</>}
+                {v === 'orders'    && <><Package       className="inline w-3 h-3 mr-1"/>Orders</>}
+                {v === 'analytics' && <><BarChart3     className="inline w-3 h-3 mr-1"/>Analytics</>}
+                {v === 'contacts'  && <><MessageSquare className="inline w-3 h-3 mr-1"/>Messages
+                  {(contactCounts['new'] || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-800 flex items-center justify-center">
+                      {contactCounts['new'] > 9 ? '9+' : contactCounts['new']}
+                    </span>
+                  )}
+                </>}
               </button>
             ))}
           </div>
@@ -410,6 +462,178 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Contact Messages View ── */}
+        {view === 'contacts' && (
+          <div className="space-y-4 mb-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:'#4a5a7a'}}/>
+                <input value={contactSearch} onChange={e=>setContactSearch(e.target.value)}
+                  placeholder="Search by name, email, subject or message…"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-xs outline-none transition-all"
+                  style={{background:'#0d1018',border:'1px solid #1a2035',color:'#c0cfe8'}}
+                  onFocus={e=>(e.target.style.borderColor='#10d988')}
+                  onBlur={e=>(e.target.style.borderColor='#1a2035')}/>
+              </div>
+              <button onClick={fetchContacts}
+                className="px-4 py-2.5 rounded-xl text-xs font-700 transition-all flex items-center gap-2"
+                style={{background:'rgba(16,217,136,0.1)',border:'1px solid rgba(16,217,136,0.2)',color:'#10d988'}}>
+                <RefreshCw size={12}/> Refresh
+              </button>
+            </div>
+
+            {/* Status tabs */}
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                {k:'all',      label:'All',      color:'#6b7fa3'},
+                {k:'new',      label:'New',      color:'#f43f6e'},
+                {k:'read',     label:'Read',     color:'#38bdf8'},
+                {k:'replied',  label:'Replied',  color:'#10d988'},
+                {k:'archived', label:'Archived', color:'#4a5a7a'},
+              ].map(s => (
+                <button key={s.k} onClick={()=>setContactStatus(s.k)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-700 transition-all flex items-center gap-1.5"
+                  style={{
+                    background: contactStatus===s.k ? `${s.color}18` : 'transparent',
+                    border: `1px solid ${contactStatus===s.k ? s.color+'40' : '#1a2035'}`,
+                    color: contactStatus===s.k ? s.color : '#4a5a7a',
+                  }}>
+                  {s.label}
+                  {s.k !== 'all' && contactCounts[s.k] != null && (
+                    <span className="rounded-full px-1.5 text-[9px] font-800"
+                      style={{background:`${s.color}25`,color:s.color}}>
+                      {contactCounts[s.k]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Message list */}
+            {contactLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={20} className="animate-spin" style={{color:'#10d988'}}/>
+              </div>
+            ) : contacts.length === 0 ? (
+              <div className="text-center py-14" style={{color:'#3a4a6a'}}>
+                <Inbox size={36} className="mx-auto mb-3 opacity-40"/>
+                <p className="text-sm font-600">No messages yet</p>
+                <p className="text-xs mt-1">Contact form submissions will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {contacts.map(msg => {
+                  const isOpen  = expandedContact === msg.id
+                  const priCfg  = {urgent:{c:'#f43f6e',l:'Urgent'}, high:{c:'#f5b731',l:'High'}, medium:{c:'#38bdf8',l:'Medium'}, low:{c:'#10d988',l:'Low'}}
+                  const pri     = priCfg[msg.priority as keyof typeof priCfg] || priCfg.medium
+                  const stCfg   = {new:{c:'#f43f6e'}, read:{c:'#38bdf8'}, replied:{c:'#10d988'}, archived:{c:'#4a5a7a'}}
+                  const stColor = (stCfg[msg.status as keyof typeof stCfg] || stCfg.new).c
+                  return (
+                    <div key={msg.id} style={{background:'#111520',border:`1px solid ${isOpen?'#10d98840':'#1a2035'}`,borderRadius:14}}
+                      className="overflow-hidden transition-all">
+                      {/* Row header */}
+                      <button onClick={()=>{
+                          setExpandedContact(isOpen ? null : msg.id)
+                          if (msg.status==='new') updateContact(msg.id,{status:'read'})
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors text-left">
+                        {/* Status dot */}
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{background:stColor,boxShadow:`0 0 6px ${stColor}80`}}/>
+                        {/* Avatar */}
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-800 flex-shrink-0"
+                          style={{background:'rgba(16,217,136,0.12)',color:'#10d988'}}>
+                          {msg.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[13px] font-700 text-white">{msg.name}</span>
+                            <span className="text-[11px]" style={{color:'#4a5a7a'}}>{msg.email}</span>
+                            <span className="text-[10px] font-700 px-2 py-0.5 rounded-full"
+                              style={{background:`${pri.c}18`,color:pri.c,border:`1px solid ${pri.c}30`}}>
+                              {pri.l}
+                            </span>
+                            <span className="text-[10px] font-600 px-2 py-0.5 rounded-full"
+                              style={{background:'rgba(139,92,246,0.15)',color:'#8b5cf6',border:'1px solid rgba(139,92,246,0.25)'}}>
+                              {msg.category}
+                            </span>
+                          </div>
+                          <p className="text-[12px] font-600 truncate mt-0.5" style={{color:'#c0cfe8'}}>{msg.subject}</p>
+                          {!isOpen && <p className="text-[11px] truncate" style={{color:'#4a5a7a'}}>{msg.message}</p>}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-[10px]" style={{color:'#3a4a6a'}}>{timeAgo(msg.createdAt)}</p>
+                          {isOpen ? <ChevronUp size={14} style={{color:'#4a5a7a'}} className="ml-auto mt-1"/> : <ChevronDown size={14} style={{color:'#4a5a7a'}} className="ml-auto mt-1"/>}
+                        </div>
+                      </button>
+
+                      {/* Expanded detail */}
+                      {isOpen && (
+                        <div className="px-4 pb-4 border-t" style={{borderColor:'#1a2035'}}>
+                          {/* Full message */}
+                          <div className="mt-3 rounded-xl p-4" style={{background:'#0d1018',border:'1px solid #1a2035'}}>
+                            <p className="text-[11px] font-700 uppercase tracking-widest mb-2" style={{color:'#4a5a7a'}}>Message</p>
+                            <p className="text-[13px] leading-relaxed whitespace-pre-wrap" style={{color:'#c0cfe8'}}>{msg.message}</p>
+                          </div>
+
+                          {/* Notes */}
+                          <div className="mt-3">
+                            <p className="text-[11px] font-700 uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{color:'#4a5a7a'}}>
+                              <StickyNote size={11}/> Internal Notes
+                            </p>
+                            <textarea
+                              value={contactNotes[msg.id] ?? (msg.notes || '')}
+                              onChange={e=>setContactNotes(n=>({...n,[msg.id]:e.target.value}))}
+                              placeholder="Add private notes here…"
+                              rows={2}
+                              className="w-full rounded-xl px-3 py-2.5 text-[12px] outline-none resize-none transition-all"
+                              style={{background:'#07090f',border:'1px solid #1a2035',color:'#c0cfe8'}}
+                              onFocus={e=>(e.target.style.borderColor='#8b5cf640')}
+                              onBlur={e=>{
+                                e.target.style.borderColor='#1a2035'
+                                const v = contactNotes[msg.id]
+                                if (v !== undefined && v !== (msg.notes||'')) updateContact(msg.id,{notes:v})
+                              }}
+                            />
+                          </div>
+
+                          {/* Actions */}
+                          <div className="mt-3 flex gap-2 flex-wrap">
+                            <a href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-700 transition-all"
+                              style={{background:'rgba(16,217,136,0.1)',border:'1px solid rgba(16,217,136,0.2)',color:'#10d988'}}>
+                              <Reply size={12}/> Reply via Email
+                            </a>
+                            {msg.status !== 'replied' && (
+                              <button onClick={()=>updateContact(msg.id,{status:'replied'})}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-700 transition-all"
+                                style={{background:'rgba(16,217,136,0.08)',border:'1px solid rgba(16,217,136,0.15)',color:'#10d988'}}>
+                                <Check size={12}/> Mark Replied
+                              </button>
+                            )}
+                            {msg.status !== 'archived' && (
+                              <button onClick={()=>updateContact(msg.id,{status:'archived'})}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-700 transition-all"
+                                style={{background:'rgba(74,90,122,0.1)',border:'1px solid #1a2035',color:'#4a5a7a'}}>
+                                <Archive size={12}/> Archive
+                              </button>
+                            )}
+                            <button onClick={()=>copyText(msg.email,'email-'+msg.id)}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-700 transition-all"
+                              style={{background:'rgba(56,189,248,0.08)',border:'1px solid rgba(56,189,248,0.15)',color:'#38bdf8'}}>
+                              {copied==='email-'+msg.id ? <Check size={12}/> : <Copy size={12}/>} Copy Email
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

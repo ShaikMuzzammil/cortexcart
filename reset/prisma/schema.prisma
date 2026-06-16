@@ -1,0 +1,42 @@
+// ─────────────────────────────────────────────────────────────────────────
+//  IMPORTANT — this app does NOT own this schema.
+//
+//  It connects to the SAME Neon database as `main/`, which owns the real
+//  schema (main/prisma/schema.prisma). This file is intentionally a MINIMAL
+//  SUBSET — just the two models this app touches — so `prisma generate`
+//  produces a typed client for them.
+//
+//  NEVER run `prisma db push` / `prisma migrate` from this app — doing so
+//  against this minimal schema would attempt to drop every other table in
+//  the shared database. The only command this app should ever run against
+//  the DB is `prisma generate` (which only generates TS types, no DB call).
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String?
+  password String?
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}

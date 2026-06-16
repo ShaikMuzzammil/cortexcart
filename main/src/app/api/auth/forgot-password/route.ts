@@ -4,9 +4,12 @@ import { prisma } from '@/lib/prisma'
 import { randomBytes } from 'crypto'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM   = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
-const APP    = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '')
+const resend    = new Resend(process.env.RESEND_API_KEY)
+const FROM      = process.env.RESEND_FROM_EMAIL || 'CortexCart <onboarding@resend.dev>'
+const APP       = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '')
+// RESET_APP_URL = the standalone reset mini-app's Vercel URL.
+// If not set, falls back to APP (main app's /auth/reset-password route).
+const RESET_APP = (process.env.RESET_APP_URL || APP).replace(/\/$/, '')
 
 export async function POST(req: Request) {
   try {
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
 
       await prisma.passwordResetToken.create({ data: { email, token, expiresAt } })
 
-      const resetUrl = `${APP}/auth/reset-password?token=${token}`
+      const resetUrl = `${RESET_APP}/auth/reset-password?token=${token}`
 
       // Send email — if this fails we still want to show a useful error
       const result = await resend.emails.send({

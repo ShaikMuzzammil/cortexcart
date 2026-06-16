@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: #07090f;
+  color: #c0cfe8;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.login-grid-bg {
+  background-image:
+    linear-gradient(rgba(16,217,136,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,217,136,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+}

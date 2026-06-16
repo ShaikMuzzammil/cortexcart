@@ -229,3 +229,19 @@ enum InteractionType {
   ITEM_REVIEW
   SEARCH
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  category  String   @default("General")
+  priority  String   @default("medium")
+  status    String   @default("new")
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_messages")
+}
