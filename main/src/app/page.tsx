@@ -297,7 +297,7 @@ export default async function HomePage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
                 {[
                   { val:'17',    label:'Curated Categories', icon:'🏪', color:'text-cx-emerald' },
-                  { val:'158+',  label:'Hand-picked Products', icon:'📦', color:'text-cx-violet' },
+                  { val:'288+',  label:'Hand-picked Products', icon:'📦', color:'text-cx-violet' },
                   { val:'<1s',   label:'AI Match Speed', icon:'⚡', color:'text-cx-sky' },
                   { val:'0',     label:'Data Sold, Ever', icon:'🔒', color:'text-cx-gold' },
                 ].map((s, i) => (
@@ -360,7 +360,7 @@ export default async function HomePage() {
               { title:'Verified Reviews Only', icon:'✅', color:'border-cx-gold/20 bg-cx-gold/4', textColor:'text-cx-gold',
                 desc:'Every review is linked to a verified purchase. No fake reviews, no paid rankings — just genuine feedback from real buyers.' },
               { title:'17 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
-                desc:'From Audio to Pets, Computing to Kitchen — 158+ hand-curated products across 17 distinct categories, each with expert-picked recommendations.' },
+                desc:'From Audio to Pets, Computing to Kitchen — 288+ hand-curated products across 17 distinct categories, each with expert-picked recommendations.' },
               { title:'Privacy First', icon:'🔒', color:'border-cx-sky/20 bg-cx-sky/4', textColor:'text-cx-sky',
                 desc:'We never sell your data to advertisers. Your shopping history, preferences, and personal info stay completely private and secure.' },
             ].map(adv => (
