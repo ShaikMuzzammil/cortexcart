@@ -1,8 +1,16 @@
 # ─────────────────────────────────────────────────────────────────
-#  CortexCart — Database Migration & Seed
-#  Runs `prisma db push` + `prisma db seed` against Neon whenever the
-#  schema or product catalog (seed.ts) changes on main/master.
-#  Also has a manual "Run workflow" button for emergencies.
+#  CortexCart — Database Migration & Seed (BACKUP / MANUAL PATH)
+#
+#  IMPORTANT: Vercel's build command for main/ already runs
+#  `prisma db push && npm run db:seed` on every single deploy — so the
+#  database is seeded automatically every time you push to GitHub and
+#  Vercel redeploys. You do NOT need this workflow for normal seeding.
+#
+#  This workflow exists as a manual fallback: use the "Run workflow"
+#  button in the Actions tab if you ever need to push schema/seed changes
+#  to Neon WITHOUT triggering a full Vercel redeploy (e.g. testing a
+#  schema change before deploying app code). Requires the DATABASE_URL
+#  repo secret to be set (Settings → Secrets and variables → Actions).
 # ─────────────────────────────────────────────────────────────────
 name: Database Migration
 

@@ -16,6 +16,7 @@ const STEPS = [
   { key: 'PAYMENT_CONFIRMED', label: 'Payment Confirmed', icon: CreditCard,   desc: 'Payment successfully processed' },
   { key: 'PROCESSING',        label: 'Processing',        icon: Package,      desc: 'Preparing your items for dispatch' },
   { key: 'SHIPPED',           label: 'Shipped',           icon: Truck,        desc: 'Your order is on its way' },
+  { key: 'OUT_FOR_DELIVERY',  label: 'Out for Delivery',  icon: MapPin,       desc: 'Arriving today — out with the courier' },
   { key: 'DELIVERED',         label: 'Delivered',         icon: CheckCircle2, desc: 'Order successfully delivered' },
 ]
 const STEP_ORDER = STEPS.map(s => s.key)
@@ -75,6 +76,10 @@ export default function TrackPage() {
 
   const currentStep = order ? STEP_ORDER.indexOf(order.status) : -1
   const isCancelled = order?.status === 'CANCELLED' || order?.status === 'REFUNDED'
+  // Defensive: if the backend ever sends a status not in STEPS (future-proofing),
+  // don't silently render every step as incomplete — show the raw status instead
+  // of a misleading "stuck at start" progress bar.
+  const unknownStatus = order && !isCancelled && currentStep === -1
 
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 sm:px-6 lg:px-8">
@@ -140,6 +145,14 @@ export default function TrackPage() {
                     <div>
                       <p className="font-700 text-cx-rose text-[14px]">Order {order.status.charAt(0) + order.status.slice(1).toLowerCase()}</p>
                       <p className="text-cx-muted text-[12px]">This order has been cancelled or refunded</p>
+                    </div>
+                  </div>
+                ) : unknownStatus ? (
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-cx-sky/10 border border-cx-sky/20">
+                    <Package size={20} className="text-cx-sky" />
+                    <div>
+                      <p className="font-700 text-cx-sky text-[14px]">Status: {order.status.replace(/_/g, ' ')}</p>
+                      <p className="text-cx-muted text-[12px]">Your order is being processed — check back soon for tracking details</p>
                     </div>
                   </div>
                 ) : (
@@ -299,10 +312,11 @@ export default function TrackPage() {
                           'bg-cx-violet/10 text-cx-violet':      o.status === 'PAYMENT_CONFIRMED',
                           'bg-cx-sky/10 text-cx-sky':            o.status === 'PROCESSING',
                           'bg-cx-gold/10 text-cx-gold':          o.status === 'SHIPPED',
+                          'bg-orange-500/10 text-orange-400':    o.status === 'OUT_FOR_DELIVERY',
                           'bg-cx-emerald/10 text-cx-emerald':    o.status === 'DELIVERED',
-                          'bg-cx-rose/10 text-cx-rose':          o.status === 'CANCELLED',
+                          'bg-cx-rose/10 text-cx-rose':          o.status === 'CANCELLED' || o.status === 'REFUNDED',
                         })}>
-                          {o.status}
+                          {o.status?.replace(/_/g, ' ')}
                         </span>
                         <p className="text-[13px] font-700 text-white mt-1">{formatPrice(o.total)}</p>
                       </div>

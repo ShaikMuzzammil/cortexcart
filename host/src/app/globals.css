@@ -15,37 +15,48 @@ body {
 ::-webkit-scrollbar-track { background: #0d1018; }
 ::-webkit-scrollbar-thumb { background: #1a2035; border-radius: 3px; }
 
-.card {
-  background: #111520;
-  border: 1px solid #1a2035;
-  border-radius: 16px;
-}
+/* ── Reusable component classes ──────────────────────────────────────────
+   IMPORTANT: these live inside @layer components so Tailwind's layer
+   ordering rules apply — utility classes (pl-9, pr-12, etc.) used alongside
+   them will ALWAYS win in the cascade, regardless of where in this file
+   they're declared. Without @layer, a plain CSS class declared after
+   `@tailwind utilities` silently overrides utility classes with equal
+   specificity — that bug caused icon/placeholder-text overlap on the host
+   login page (padding from .input beat pl-9/pr-9). @layer prevents that
+   entire category of bug everywhere this class is used. */
+@layer components {
+  .card {
+    background: #111520;
+    border: 1px solid #1a2035;
+    border-radius: 16px;
+  }
 
-.btn-primary {
-  background: linear-gradient(135deg, #10d988, #0a9e62);
-  color: #07090f;
-  font-weight: 800;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-size: 13px;
-  transition: opacity 0.2s;
-}
-.btn-primary:hover { opacity: 0.9; }
+  .btn-primary {
+    background: linear-gradient(135deg, #10d988, #0a9e62);
+    color: #07090f;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 13px;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
 
-.input {
-  background: #0d1018;
-  border: 1px solid #1a2035;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #c0cfe8;
-  outline: none;
-  width: 100%;
-  transition: border-color 0.2s;
-}
-.input:focus { border-color: #10d988; }
+  .input {
+    background: #0d1018;
+    border: 1px solid #1a2035;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #c0cfe8;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .input:focus { border-color: #10d988; }
 
-.badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+}
 
 /* ── Login page animations ───────────────────────────────────── */
 @keyframes gridPan {

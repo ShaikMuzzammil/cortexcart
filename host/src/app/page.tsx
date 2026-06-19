@@ -102,20 +102,21 @@ export default function LoginPage() {
               Admin Password
             </label>
             <div className="relative">
-              <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#4a5a7a' }} />
+              <Lock size={15} className="absolute top-1/2 -translate-y-1/2 pointer-events-none" style={{ left: 14, color: '#10d988', opacity: 0.7 }} />
               <input
                 type={show ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Enter admin password"
-                className="input pl-9 pr-9"
+                className="input"
+                style={{ paddingLeft: 42, paddingRight: 42 }}
                 autoFocus
                 required
               />
               <button type="button" onClick={() => setShow(!show)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
-                style={{ color: '#4a5a7a' }}>
-                {show ? <EyeOff size={14} /> : <Eye size={14} />}
+                className="absolute top-1/2 -translate-y-1/2 transition-colors hover:text-white"
+                style={{ right: 14, color: '#4a5a7a' }}>
+                {show ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
           </div>
