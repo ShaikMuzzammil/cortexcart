@@ -46,8 +46,13 @@ export default function AccountPage() {
   }, [status])
 
   useEffect(() => {
-    if (tab === 'orders' && session?.user) fetchOrders()
-  }, [tab, session])
+    // Fetch orders as soon as the session is ready, regardless of which tab
+    // is active. Previously this only fired when tab === 'orders', so the
+    // "Orders" stat card on the Profile tab (the default landing tab) always
+    // showed an empty dash — the data was never requested unless the user
+    // happened to click into the Orders tab first.
+    if (session?.user) fetchOrders()
+  }, [session])
 
   const fetchOrders = async () => {
     setLoadO(true)
@@ -135,7 +140,7 @@ export default function AccountPage() {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { icon: Package, label: 'Orders',     val: orders.length || '—',                      color: 'text-cx-emerald' },
+                  { icon: Package, label: 'Orders',     val: loadingO ? '…' : orders.length,             color: 'text-cx-emerald' },
                   { icon: Heart,   label: 'Wishlist',   val: wishlistItems.length,                       color: 'text-cx-rose'    },
                   { icon: Star,    label: 'Reviews',    val: '0',                                        color: 'text-cx-gold'    },
                 ].map(s => (
