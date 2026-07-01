@@ -58,12 +58,12 @@ prisma generate && prisma db push --skip-generate --accept-data-loss && npm run 
 ```
 This requires zero extra setup — no GitHub secret, no manual trigger. Every
 push to GitHub that Vercel redeploys will automatically sync the database to
-the full 288-product, 17-category catalog. The seed script is idempotent
+the full 273-product, 16-category catalog. The seed script is idempotent
 (`upsert` on every row), so running it on every deploy is always safe and
 never creates duplicates.
 
 If you still see 12 products after redeploying from this zip, check the
-Vercel build logs for `✅ 288 products seeded` — if that line is missing,
+Vercel build logs for `✅ 273 products seeded` — if that line is missing,
 the build is failing before reaching the seed step (check for a
 `DATABASE_URL` typo in your env vars).
 
@@ -95,7 +95,7 @@ zero-progress bar.
 
 ```bash
 git add .
-git commit -m "v20: reset app, 288 products, blank page fix, contacts inbox"
+git commit -m "v20: reset app, 273 products, blank page fix, contacts inbox"
 git push origin main
 ```
 
@@ -209,7 +209,7 @@ To enable it:
 
 | Project | Root Dir | Build Command | DB Push + Seed? |
 |---|---|---|---|
-| main (store) | `main` | `prisma generate && prisma db push ... && npm run db:seed && next build` | Yes — on every deploy, automatically. Creates/updates all tables and seeds 288 products. |
+| main (store) | `main` | `prisma generate && prisma db push ... && npm run db:seed && next build` | Yes — on every deploy, automatically. Creates/updates all tables and seeds 273 products. |
 | host (admin) | `host` | `prisma generate && next build` | No — reads same DB |
 | reset (password) | `reset` | `prisma generate && next build` | No — reads same DB |
 
@@ -220,9 +220,9 @@ All 3 share the same `DATABASE_URL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`.
 ## What's in this version (v21)
 
 ### Products
-- **288 products across 17 categories**
+- **273 products across 16 categories**
 - Tech: 30 | Gaming: 20 | Home: 20 | Fashion: 20 | Sports: 18
-- Audio/Computing/Electronics/Wearables/Photography/Beauty/Office/Music/Travel/Books/Kitchen/Pets: 15 each
+- Audio/Computing/Electronics/Wearables/Photography/Beauty/Office/Music/Travel/Books/Kitchen: 15 each
 - All products have 3 verified, relevant Unsplash images (no mismatched photos)
 - Seeding now runs automatically on **every** Vercel deploy (see Critical Fix above) — no longer dependent on GitHub Actions being configured
 

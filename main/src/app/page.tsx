@@ -4,13 +4,13 @@ import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { ProductCard } from '@/components/ProductCard'
 import { formatPrice } from '@/lib/utils'
-import { ArrowRight, Zap, Brain, TrendingUp, Shield, Sparkles, ChevronRight, Star, Package, Award, Cpu, Watch, Headphones, Monitor, Camera, Gamepad2, BadgeCheck, Truck, RotateCcw, MessageCircle, Shirt, Dumbbell, Briefcase, Music2, Plane, BookOpen, UtensilsCrossed, PawPrint, Home } from 'lucide-react'
+import { ArrowRight, Zap, Brain, TrendingUp, Shield, Sparkles, ChevronRight, Star, Package, Award, Cpu, Watch, Headphones, Monitor, Camera, Gamepad2, BadgeCheck, Truck, RotateCcw, MessageCircle, Shirt, Dumbbell, Briefcase, Music2, Plane, BookOpen, UtensilsCrossed, Home } from 'lucide-react'
 
 async function getData() {
   const [featured, newArrivals, categories, productCount, orderCount] = await Promise.all([
     prisma.product.findMany({ where:{ isActive:true, isFeatured:true }, include:{ category:true }, take:6, orderBy:{ reviewCount:'desc' } }),
     prisma.product.findMany({ where:{ isActive:true }, include:{ category:true }, take:4, orderBy:{ createdAt:'desc' } }),
-    prisma.category.findMany({ take:17, orderBy:{ name:'asc' } }),
+    prisma.category.findMany({ take:16, orderBy:{ name:'asc' } }),
     prisma.product.count({ where:{ isActive:true } }),
     prisma.order.count(),
   ])
@@ -40,7 +40,7 @@ const CAT_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
   travel:      { icon:Plane,           color:'text-cx-gold',    bg:'bg-cx-gold/8' },
   books:       { icon:BookOpen,        color:'text-cx-rose',    bg:'bg-cx-rose/8' },
   kitchen:     { icon:UtensilsCrossed, color:'text-cx-emerald', bg:'bg-cx-emerald/8' },
-  pets:        { icon:PawPrint,        color:'text-cx-violet',  bg:'bg-cx-violet/8' },
+
   home:        { icon:Home,            color:'text-cx-sky',     bg:'bg-cx-sky/8' },
 }
 
@@ -255,7 +255,7 @@ export default async function HomePage() {
               Shopping, <span className="grad-multi">Reimagined</span>
             </h2>
             <p className="text-cx-dim text-[15px] max-w-2xl mx-auto">
-              We combined cutting-edge AI with a curated catalog across 17 categories — 
+              We combined cutting-edge AI with a curated catalog across 16 categories — 
               so you always find exactly what you need, at the best price.
             </p>
           </div>
@@ -296,8 +296,8 @@ export default async function HomePage() {
               {/* Animated stat counters */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
                 {[
-                  { val:'17',    label:'Curated Categories', icon:'🏪', color:'text-cx-emerald' },
-                  { val:'288+',  label:'Hand-picked Products', icon:'📦', color:'text-cx-violet' },
+                  { val:'16',    label:'Curated Categories', icon:'🏪', color:'text-cx-emerald' },
+                  { val:'273+',  label:'Hand-picked Products', icon:'📦', color:'text-cx-violet' },
                   { val:'<1s',   label:'AI Match Speed', icon:'⚡', color:'text-cx-sky' },
                   { val:'0',     label:'Data Sold, Ever', icon:'🔒', color:'text-cx-gold' },
                 ].map((s, i) => (
@@ -359,8 +359,8 @@ export default async function HomePage() {
                 desc:'Track any order with a 5-step visual timeline. From placement to delivery — every status update is pushed in real-time.' },
               { title:'Verified Reviews Only', icon:'✅', color:'border-cx-gold/20 bg-cx-gold/4', textColor:'text-cx-gold',
                 desc:'Every review is linked to a verified purchase. No fake reviews, no paid rankings — just genuine feedback from real buyers.' },
-              { title:'17 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
-                desc:'From Audio to Pets, Computing to Kitchen — 288+ hand-curated products across 17 distinct categories, each with expert-picked recommendations.' },
+              { title:'16 Curated Categories', icon:'🏪', color:'border-cx-rose/20 bg-cx-rose/4', textColor:'text-cx-rose',
+                desc:'From Audio to Wearables, Computing to Kitchen — 273+ hand-curated products across 16 distinct categories, each with expert-picked recommendations.' },
               { title:'Privacy First', icon:'🔒', color:'border-cx-sky/20 bg-cx-sky/4', textColor:'text-cx-sky',
                 desc:'We never sell your data to advertisers. Your shopping history, preferences, and personal info stay completely private and secure.' },
             ].map(adv => (

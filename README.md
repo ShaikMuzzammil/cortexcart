@@ -19,7 +19,7 @@
 
 ## What is CortexCart?
 
-CortexCart is a full-stack e-commerce platform that pairs a real-time AI shopping assistant with a hand-curated catalog of **288 products across 17 categories**. Instead of one monolithic app, it's split into **three focused applications** that each do one job well and stay in sync through a single shared database — the same architectural pattern used by real production storefronts that separate customer-facing, internal, and account-recovery surfaces.
+CortexCart is a full-stack e-commerce platform that pairs a real-time AI shopping assistant with a hand-curated catalog of **273 products across 16 categories**. Instead of one monolithic app, it's split into **three focused applications** that each do one job well and stay in sync through a single shared database — the same architectural pattern used by real production storefronts that separate customer-facing, internal, and account-recovery surfaces.
 
 ```
                          ┌─────────────────────────────┐
@@ -46,7 +46,7 @@ Each app deploys independently to its own Vercel project. They never call each o
 ### 🛍️ `main` — Customer Storefront
 The public shopping experience. Browse, search, get AI-matched recommendations, track orders, and check out — Cash on Delivery only, no card data ever touches the app.
 
-- 288 products across 17 categories (Tech, Audio, Computing, Electronics, Wearables, Photography, Gaming, Home, Fashion, Beauty, Sports, Office, Music, Travel, Books, Kitchen, Pets)
+- 273 products across 16 categories (Tech, Audio, Computing, Electronics, Wearables, Photography, Gaming, Home, Fashion, Beauty, Sports, Office, Music, Travel, Books, Kitchen)
 - AI shopping assistant with a 3-tier provider fallback chain (Gemini → Groq → scored relevance engine) — never goes down, never costs more than free-tier
 - Batch recommendations: upload a CSV/TXT of products you want and get AI-matched results in bulk
 - Full auth (NextAuth), live order tracking with a 6-stage delivery timeline, animated checkout, contact form
@@ -111,7 +111,7 @@ npm install
 cp .env.example .env.local   # fill in your values
 npx prisma generate
 npx prisma db push           # main only
-npm run db:seed              # main only — seeds 288 products
+npm run db:seed              # main only — seeds 273 products
 npm run dev
 ```
 

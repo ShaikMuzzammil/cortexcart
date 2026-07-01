@@ -29,7 +29,7 @@ const CAT_ICONS: Record<string, string> = {
   tech:'💻', audio:'🎧', computing:'🖥️', electronics:'🔌', wearables:'⌚', photography:'📷',
   gaming:'🎮', home:'🏠', fashion:'👗', beauty:'✨',
   sports:'🏋️', office:'🖊️', music:'🎵', travel:'✈️',
-  books:'📚', kitchen:'🍳', pets:'🐾',
+  books:'📚', kitchen:'🍳',
 }
 
 export function ProductFilters({ categories, currentParams }: Props) {

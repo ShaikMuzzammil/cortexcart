@@ -22,7 +22,6 @@ const CATEGORIES = [
   { label:'Office',  href:'/products?category=office',  icon:Cpu,        color:'text-cx-dim'     },
   { label:'Travel',  href:'/products?category=travel',  icon:Camera,     color:'text-cx-emerald' },
   { label:'Kitchen', href:'/products?category=kitchen', icon:Monitor,    color:'text-cx-gold'    },
-  { label:'Pets',    href:'/products?category=pets',    icon:Sparkles,   color:'text-cx-rose'    },
   { label:'Books',   href:'/products?category=books',   icon:Package,    color:'text-cx-violet'  },
 ]
 
