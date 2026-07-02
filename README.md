@@ -119,12 +119,12 @@ npm run dev
 
 <div align="center">
 
-### Built by **[Your Name]**
+### Built by **[Shaik Muzzammil]**
 
 A self-built, production-architected e-commerce platform — designed, coded, and deployed end-to-end.
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/your-username)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ShaikMuzzammil)
 
-License: _MIT — to be added_
+License: _MIT (https://github.com/ShaikMuzzammil/cortexcart/tree/main?tab=MIT-1-ov-file#)_
 
 </div>
