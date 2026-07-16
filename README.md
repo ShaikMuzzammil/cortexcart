@@ -1,5 +1,5 @@
 <div align="center">
-
+  
 # ⚡ CortexCart
 
 **An AI-powered e-commerce platform built as three independent, purpose-built applications sharing a single source of truth.**
